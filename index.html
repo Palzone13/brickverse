@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brickverse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #7C3AED;
+      --bg: #0F0F13;
+      --surface: #1A1A24;
+      --surface2: #22222F;
+      --border: rgba(255,255,255,0.08);
+      --text: #F0EFF8;
+      --muted: #8B89A0;
+      --tag-bg: rgba(124,58,237,0.18);
+      --tag-color: #A78BFA;
+      --green: #22C55E;
+      --red: #EF4444;
+    }
+    html, body { min-height: 100vh; }
+    body { background: var(--bg); font-family: 'Nunito Sans', sans-serif; color: var(--text); }
+
+    /* TOPBAR */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      height: 56px;
+      gap: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 22px;
+      letter-spacing: -0.5px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+    .topbar-search { flex: 1; max-width: 340px; position: relative; }
+    .topbar-search input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 12px 7px 36px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .topbar-search input:focus { border-color: var(--accent); }
+    .topbar-search input::placeholder { color: var(--muted); }
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .search-icon svg { display: block; width: 15px; height: 15px; }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+    .btn {
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s, background 0.15s, color 0.15s, border-color 0.15s;
+      border: none;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { opacity: 0.88; }
+
+    /* NAV STRIP */
+    .nav-strip {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 24px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .nav-strip::-webkit-scrollbar { display: none; }
+    .nav-tab {
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      font-family: inherit;
+    }
+    .nav-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+    .nav-tab:hover:not(.active) { color: var(--text); }
+
+    /* MAIN LAYOUT */
+    .main {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      min-height: calc(100vh - 106px);
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 16px 12px;
+    }
+    .sidebar-section { margin-bottom: 24px; }
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      padding: 0 8px;
+      margin-bottom: 6px;
+    }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      transition: background 0.12s, color 0.12s;
+      border: none;
+      background: none;
+      font-family: inherit;
+      width: 100%;
+      text-align: left;
+      text-decoration: none;
+    }
+    .sidebar-item:hover,
+    .sidebar-item.active { background: var(--surface2); color: var(--text); }
+    .sidebar-item.active { color: #A78BFA; }
+    .sidebar-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+    .sidebar-locked { opacity: 0.4; pointer-events: none; }
+
+    .sidebar-auth-nudge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin: 8px 0;
+    }
+    .sidebar-auth-nudge p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+    .sidebar-auth-nudge .btn {
+      width: 100%;
+      justify-content: center;
+      font-size: 12px;
+      padding: 7px 12px;
+    }
+
+    /* CONTENT */
+    .content { padding: 24px; }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, #1e1040 0%, #0d2040 50%, #0d2a2a 100%);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      right: -40px;
+      top: -40px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,58,237,0.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-title {
+      font-family: 'Nunito', sans-serif;
+      font-size: 26px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+    .hero-sub {
+      color: var(--muted);
+      font-size: 14px;
+      max-width: 380px;
+      line-height: 1.5;
+    }
+    .hero-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+    .hero-actions .btn { font-size: 14px; padding: 10px 22px; }
+
+    /* SECTION HEADER */
+    .section-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-family: 'Nunito', sans-serif;
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    /* CHIPS */
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .chip {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.12s;
+      font-family: inherit;
+    }
+    .chip.active {
+      background: var(--tag-bg);
+      border-color: var(--accent);
+      color: var(--tag-color);
+    }
+    .chip:hover:not(.active) { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    /* EMPTY STATE */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 64px 24px;
+      text-align: center;
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+    }
+    .empty-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .empty-icon svg { width: 26px; height: 26px; opacity: 0.4; }
+    .empty-title {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+    .empty-sub {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      max-width: 280px;
+      margin-bottom: 20px;
+    }
+
+    /* MODAL OVERLAY */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 400px;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: none; border: none;
+      color: var(--muted); cursor: pointer;
+      font-size: 20px; line-height: 1;
+      padding: 4px;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-title {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+    .modal-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .modal-sub span {
+      color: #A78BFA;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    /* FORM */
+    .form-group { margin-bottom: 14px; }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus { border-color: var(--accent); }
+    .form-input::placeholder { color: var(--muted); }
+    .form-error {
+      font-size: 12px;
+      color: var(--red);
+      margin-top: 6px;
+      display: none;
+    }
+    .form-error.show { display: block; }
+
+    .btn-full { width: 100%; justify-content: center; padding: 11px 16px; font-size: 14px; }
+
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 18px 0; color: var(--muted); font-size: 12px;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    .btn-google {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 11px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: border-color 0.15s;
+    }
+    .btn-google:hover { border-color: rgba(255,255,255,0.2); }
+    .btn-google svg { flex-shrink: 0; }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex; align-items: center; gap: 8px;
+      z-index: 2000;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+    .toast.success { border-color: rgba(34,197,94,0.4); color: var(--green); }
+    .toast.error { border-color: rgba(239,68,68,0.4); color: var(--red); }
+
+    /* LOGGED-IN TOPBAR */
+    .user-menu { position: relative; }
+    .user-btn {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 5px 10px 5px 5px;
+      cursor: pointer; transition: border-color 0.15s;
+      font-family: inherit;
+    }
+    .user-btn:hover { border-color: rgba(255,255,255,0.2); }
+    .user-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, #7C3AED, #06B6D4);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 11px; font-family: 'Nunito', sans-serif;
+      color: #fff; overflow: hidden; flex-shrink: 0;
+    }
+    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .user-name { font-size: 13px; font-weight: 700; color: var(--text); }
+    .bricks-pill {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--tag-bg); border: 1px solid rgba(124,58,237,0.3);
+      border-radius: 20px; padding: 4px 10px;
+      font-size: 12px; font-weight: 700; color: var(--tag-color);
+    }
+    .user-dropdown {
+      display: none;
+      position: absolute; top: calc(100% + 8px); right: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; min-width: 180px; overflow: hidden;
+      z-index: 200;
+    }
+    .user-dropdown.open { display: block; }
+    .dropdown-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; font-size: 13px; font-weight: 600;
+      color: var(--muted); cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+      border: none; background: none; font-family: inherit; width: 100%; text-align: left;
+    }
+    .dropdown-item:hover { background: var(--surface2); color: var(--text); }
+    .dropdown-item.danger:hover { color: var(--red); }
+    .dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 640px) {
+      .main { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .hero { flex-direction: column; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <a href="/" class="logo">
+      <div class="logo-dot"></div>
+      Brickverse
+    </a>
+    <div class="topbar-search">
+      <span class="search-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+      </span>
+      <input type="text" id="searchInput" placeholder="Search games, creators..." />
+    </div>
+    <div class="topbar-right" id="topbarRight">
+      <button class="btn btn-ghost" id="loginBtn">Log in</button>
+      <button class="btn btn-primary" id="signupBtn">Sign up</button>
+    </div>
+  </header>
+
+  <!-- NAV STRIP -->
+  <nav class="nav-strip">
+    <button class="nav-tab active">Home</button>
+    <button class="nav-tab">Popular</button>
+    <button class="nav-tab">New &amp; Trending</button>
+    <button class="nav-tab">Top Rated</button>
+    <button class="nav-tab">Roleplay</button>
+    <button class="nav-tab">Obby</button>
+    <button class="nav-tab">Tycoon</button>
+    <button class="nav-tab">Fighting</button>
+    <button class="nav-tab">Simulator</button>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Discover</div>
+        <button class="sidebar-item active">
+          <span class="sidebar-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </span>
+          Featured
+        </button>
+        <button class="sidebar-item">
+          <span class="sidebar-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+          </span>
+          Hot Right Now
+        </button>
+        <button class="sidebar-item">
+          <span class="sidebar-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+          New Releases
+        </button>
+        <button class="sidebar-item">
+          <span class="sidebar-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+          </span>
+          Editor's Pick
+        </button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Your Stuff</div>
+        <div class="sidebar-auth-nudge">
+          <p>Sign in to access your games, favorites, and history.</p>
+          <button class="btn btn-primary" id="sidebarSignupBtn">Sign up free</button>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Social</div>
+        <button class="sidebar-item sidebar-locked">
+          <span class="sidebar-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </span>
+          Friends
+        </button>
+        <button class="sidebar-item sidebar-locked">
+          <span class="sidebar-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </span>
+          Messages
+        </button>
+        <button class="sidebar-item sidebar-locked">
+          <span class="sidebar-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </span>
+          Groups
+        </button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Shop</div>
+        <button class="sidebar-item">
+          <span class="sidebar-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          </span>
+          Avatar Shop
+        </button>
+        <button class="sidebar-item">
+          <span class="sidebar-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </span>
+          Get Bricks
+        </button>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+      <!-- HERO -->
+      <section class="hero">
+        <div>
+          <div class="hero-title">Play, build, and share.</div>
+          <div class="hero-sub">A platform for user-created games. Explore worlds made by the community — or build your own.</div>
+          <div class="hero-actions">
+            <button class="btn btn-primary" id="heroSignupBtn">Get started free</button>
+            <button class="btn btn-ghost" id="heroBrowseBtn">Browse games</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHIPS -->
+      <div class="chips" id="chips">
+        <button class="chip active">All</button>
+        <button class="chip">Obby</button>
+        <button class="chip">Tycoon</button>
+        <button class="chip">Simulator</button>
+        <button class="chip">Fighting</button>
+        <button class="chip">Roleplay</button>
+        <button class="chip">Horror</button>
+        <button class="chip">Racing</button>
+        <button class="chip">Sandbox</button>
+      </div>
+
+      <!-- POPULAR -->
+      <div class="section-hdr">
+        <span class="section-title">Popular Right Now</span>
+      </div>
+
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <path d="M8 21h8M12 17v4"/>
+            <circle cx="9" cy="10" r="1.5"/>
+            <path d="M14 9h3M14 12h2"/>
+          </svg>
+        </div>
+        <div class="empty-title">No games yet</div>
+        <div class="empty-sub">Be the first to publish a game.</div>
+        <button class="btn btn-primary" id="emptySignupBtn">Sign up to create</button>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- AUTH MODAL -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal">
+      <button class="modal-close" id="modalClose">&times;</button>
+      <div class="modal-title" id="modalTitle">Create account</div>
+      <div class="modal-sub" id="modalSub">
+        Already have an account? <span id="modalToggle">Log in</span>
+      </div>
+
+      <button class="btn-google" id="googleBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div class="divider">or</div>
+
+      <div id="signupFields">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input class="form-input" type="text" id="usernameInput" placeholder="e.g. coolgamer42" autocomplete="username" />
+          <div class="form-error" id="usernameError"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="emailInput" placeholder="you@example.com" autocomplete="email" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="passwordInput" placeholder="Min. 8 characters" autocomplete="current-password" />
+        <div class="form-error" id="authError"></div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="submitBtn" style="margin-top:8px;">Create account</button>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ─── CONFIG ──────────────────────────────────────────────
+    const SUPABASE_URL  = 'https://actpttkngkmjmzhukxva.supabase.co';
+    const SUPABASE_ANON = 'sb_publishable_c7jHjcNicXKabcFPCzKjyA_ViTc0-ti';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    // ─── STATE ───────────────────────────────────────────────
+    let currentUser    = null;
+    let currentProfile = null;
+    let modalMode      = 'signup'; // 'signup' | 'login'
+
+    // ─── NAV TABS ────────────────────────────────────────────
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // ─── SIDEBAR ─────────────────────────────────────────────
+    document.querySelectorAll('.sidebar-item:not(.sidebar-locked)').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+      });
+    });
+
+    // ─── CHIPS ───────────────────────────────────────────────
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+      });
+    });
+
+    // ─── SEARCH ──────────────────────────────────────────────
+    document.getElementById('searchInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && this.value.trim()) {
+        // TODO: hook up search query
+        this.value = '';
+      }
+    });
+
+    // ─── TOAST ───────────────────────────────────────────────
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast ${type} show`;
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // ─── MODAL ───────────────────────────────────────────────
+    function openModal(mode = 'signup') {
+      modalMode = mode;
+      document.getElementById('authError').classList.remove('show');
+      document.getElementById('usernameError').classList.remove('show');
+      document.getElementById('emailInput').value = '';
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('usernameInput').value = '';
+
+      const isSignup = mode === 'signup';
+      document.getElementById('modalTitle').textContent  = isSignup ? 'Create account' : 'Welcome back';
+      document.getElementById('modalSub').innerHTML      = isSignup
+        ? 'Already have an account? <span id="modalToggle">Log in</span>'
+        : 'No account yet? <span id="modalToggle">Sign up</span>';
+      document.getElementById('submitBtn').textContent   = isSignup ? 'Create account' : 'Log in';
+      document.getElementById('signupFields').style.display = isSignup ? 'block' : 'none';
+      document.getElementById('modalToggle').addEventListener('click', () => openModal(isSignup ? 'login' : 'signup'));
+      document.getElementById('authModal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('authModal').classList.remove('open');
+    }
+
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    document.getElementById('authModal').addEventListener('click', e => {
+      if (e.target === document.getElementById('authModal')) closeModal();
+    });
+
+    // Open modal from all auth CTAs
+    ['loginBtn','signupBtn','sidebarSignupBtn','heroSignupBtn','emptySignupBtn'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('click', () => openModal(id === 'loginBtn' ? 'login' : 'signup'));
+    });
+    const heroBrowse = document.getElementById('heroBrowseBtn');
+    if (heroBrowse) heroBrowse.addEventListener('click', closeModal);
+
+    // ─── GOOGLE OAUTH ────────────────────────────────────────
+    document.getElementById('googleBtn').addEventListener('click', async () => {
+      const { error } = await sb.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin }
+      });
+      if (error) showToast(error.message, 'error');
+    });
+
+    // ─── EMAIL AUTH ──────────────────────────────────────────
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      const email    = document.getElementById('emailInput').value.trim();
+      const password = document.getElementById('passwordInput').value;
+      const username = document.getElementById('usernameInput').value.trim().toLowerCase();
+      const errEl    = document.getElementById('authError');
+      const unEl     = document.getElementById('usernameError');
+
+      errEl.classList.remove('show');
+      unEl.classList.remove('show');
+
+      if (modalMode === 'signup') {
+        if (!username || !/^[a-z0-9_]{3,20}$/.test(username)) {
+          unEl.textContent = 'Username must be 3–20 characters: letters, numbers, underscores only.';
+          unEl.classList.add('show');
+          return;
+        }
+        // Check username availability
+        const { data: existing } = await sb.from('profiles').select('id').eq('username', username).maybeSingle();
+        if (existing) {
+          unEl.textContent = 'That username is taken. Try another.';
+          unEl.classList.add('show');
+          return;
+        }
+
+        const { data, error } = await sb.auth.signUp({
+          email, password,
+          options: { data: { preferred_username: username } }
+        });
+        if (error) { errEl.textContent = error.message; errEl.classList.add('show'); return; }
+        if (data.user && !data.session) {
+          closeModal();
+          showToast('Check your email to confirm your account!');
+        }
+      } else {
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) { errEl.textContent = error.message; errEl.classList.add('show'); return; }
+        closeModal();
+      }
+    });
+
+    // ─── AUTH STATE ──────────────────────────────────────────
+    async function fetchProfile(userId) {
+      const { data } = await sb.from('profiles').select('*').eq('id', userId).single();
+      return data;
+    }
+
+    function renderLoggedIn(profile) {
+      const initials = (profile.display_name || profile.username || '?')
+        .split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+      const bricks = (profile.bricks || 0).toLocaleString();
+
+      document.getElementById('topbarRight').innerHTML = `
+        <div class="bricks-pill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+          ${bricks}
+        </div>
+        <div class="user-menu" id="userMenu">
+          <button class="user-btn" id="userBtn">
+            <div class="user-avatar" id="userAvatar">
+              ${profile.avatar_url
+                ? `<img src="${profile.avatar_url}" alt="avatar" />`
+                : initials}
+            </div>
+            <span class="user-name">@${profile.username}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--muted)"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="user-dropdown" id="userDropdown">
+            <button class="dropdown-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Profile
+            </button>
+            <button class="dropdown-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+              Settings
+            </button>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item danger" id="signOutBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Sign out
+            </button>
+          </div>
+        </div>`;
+
+      document.getElementById('userBtn').addEventListener('click', e => {
+        e.stopPropagation();
+        document.getElementById('userDropdown').classList.toggle('open');
+      });
+      document.addEventListener('click', () => {
+        const dd = document.getElementById('userDropdown');
+        if (dd) dd.classList.remove('open');
+      });
+      document.getElementById('signOutBtn').addEventListener('click', async () => {
+        await sb.auth.signOut();
+      });
+
+      // Update sidebar — unlock social items, show "My Games"
+      document.querySelectorAll('.sidebar-locked').forEach(el => {
+        el.classList.remove('sidebar-locked');
+      });
+      const nudge = document.querySelector('.sidebar-auth-nudge');
+      if (nudge) {
+        nudge.outerHTML = `
+          <button class="sidebar-item">
+            <span class="sidebar-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+            My Games
+          </button>
+          <button class="sidebar-item">
+            <span class="sidebar-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
+            Favorites
+          </button>
+          <button class="sidebar-item">
+            <span class="sidebar-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+            Recently Played
+          </button>`;
+      }
+
+      // Re-bind sidebar clicks
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+        });
+      });
+
+      // Update hero
+      document.querySelector('.hero-title').textContent = `Welcome back, ${profile.display_name || profile.username}!`;
+      document.querySelector('.hero-sub').textContent   = 'Pick up where you left off or explore what\'s new today.';
+      const heroActions = document.querySelector('.hero-actions');
+      if (heroActions) heroActions.innerHTML = `<button class="btn btn-primary" style="font-size:14px;padding:10px 22px;">&#9654; Continue Playing</button>`;
+    }
+
+    function renderLoggedOut() {
+      document.getElementById('topbarRight').innerHTML = `
+        <button class="btn btn-ghost" id="loginBtn">Log in</button>
+        <button class="btn btn-primary" id="signupBtn">Sign up</button>`;
+      document.getElementById('loginBtn').addEventListener('click', () => openModal('login'));
+      document.getElementById('signupBtn').addEventListener('click', () => openModal('signup'));
+    }
+
+    sb.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        currentUser    = session.user;
+        currentProfile = await fetchProfile(session.user.id);
+        if (currentProfile) {
+          renderLoggedIn(currentProfile);
+          if (event === 'SIGNED_IN') {
+            closeModal();
+            showToast(`Welcome, ${currentProfile.display_name || currentProfile.username}!`);
+          }
+        }
+      } else {
+        currentUser    = null;
+        currentProfile = null;
+        renderLoggedOut();
+      }
+    });
+  </script>
+
+</body>
+</html>
