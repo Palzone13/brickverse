@@ -484,7 +484,91 @@
     .dropdown-item.danger:hover { color: var(--red); }
     .dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; }
 
-    /* RESPONSIVE */
+    /* SOCIAL PANEL */
+    .panel-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 500;
+      justify-content: flex-end;
+    }
+    .panel-overlay.open { display: flex; }
+    .panel {
+      background: var(--surface); width: 340px; max-width: 100vw;
+      height: 100vh; display: flex; flex-direction: column;
+      border-left: 1px solid var(--border); overflow: hidden;
+    }
+    .panel-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 16px; height: 52px; flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-tabs { display: flex; gap: 4px; flex: 1; }
+    .panel-tab {
+      padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 700;
+      color: var(--muted); background: none; border: none; cursor: pointer;
+      font-family: inherit; transition: background 0.12s, color 0.12s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .panel-tab.active { background: var(--surface2); color: var(--text); }
+    .panel-close {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 20px; padding: 4px; transition: color 0.15s; line-height: 1;
+    }
+    .panel-close:hover { color: var(--text); }
+    .panel-section-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--muted); padding: 12px 16px 6px;
+    }
+    .panel-empty { padding: 24px 16px; font-size: 13px; color: var(--muted); text-align: center; }
+    .friend-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; transition: background 0.12s; cursor: pointer;
+    }
+    .friend-row:hover { background: var(--surface2); }
+    .friend-avatar {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, #7C3AED, #06B6D4);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 12px; font-family: 'Nunito', sans-serif;
+      color: #fff; overflow: hidden; position: relative;
+    }
+    .friend-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .online-dot {
+      position: absolute; bottom: 0; right: 0;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--green); border: 2px solid var(--surface);
+    }
+    .friend-info { flex: 1; min-width: 0; }
+    .friend-name { font-size: 13px; font-weight: 700; }
+    .friend-status { font-size: 11px; color: var(--muted); }
+    .friend-actions { display: flex; gap: 6px; }
+    .btn-icon {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 5px 8px; cursor: pointer;
+      color: var(--muted); transition: color 0.12s, border-color 0.12s;
+      display: flex; align-items: center;
+    }
+    .btn-icon:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+    .btn-icon.accept:hover { color: var(--green); border-color: rgba(34,197,94,0.4); }
+    .btn-icon.decline:hover { color: var(--red); border-color: rgba(239,68,68,0.4); }
+    .unread-badge {
+      background: var(--red); color: #fff; border-radius: 20px;
+      font-size: 10px; font-weight: 800; padding: 1px 6px; min-width: 18px; text-align: center;
+    }
+    .dm-row { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; transition: background 0.12s; }
+    .dm-row:hover { background: var(--surface2); }
+    .dm-last { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .btn-back { background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px; display: flex; align-items: center; transition: color 0.12s; }
+    .btn-back:hover { color: var(--text); }
+    .chat-msg { display: flex; flex-direction: column; max-width: 75%; }
+    .chat-msg.mine { align-self: flex-end; align-items: flex-end; }
+    .chat-msg.theirs { align-self: flex-start; align-items: flex-start; }
+    .chat-bubble {
+      padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 1.5; word-break: break-word;
+    }
+    .chat-msg.mine .chat-bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 3px; }
+    .chat-msg.theirs .chat-bubble { background: var(--surface2); color: var(--text); border-bottom-left-radius: 3px; }
+    .chat-time { font-size: 10px; color: var(--muted); margin-top: 3px; }
+    .chat-read { font-size: 10px; color: var(--muted); margin-top: 2px; }
     @media (max-width: 640px) {
       .main { grid-template-columns: 1fr; }
       .sidebar { display: none; }
@@ -570,13 +654,13 @@
 
       <div class="sidebar-section">
         <div class="sidebar-label">Social</div>
-        <button class="sidebar-item sidebar-locked">
+        <button class="sidebar-item sidebar-locked" onclick="openSocialPanel('friends')">
           <span class="sidebar-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </span>
           Friends
         </button>
-        <button class="sidebar-item sidebar-locked">
+        <button class="sidebar-item sidebar-locked" onclick="openSocialPanel('messages')">
           <span class="sidebar-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </span>
@@ -698,6 +782,69 @@
       </div>
 
       <button class="btn btn-primary btn-full" id="submitBtn" style="margin-top:8px;">Create account</button>
+    </div>
+  </div>
+
+  <!-- FRIENDS & DM PANEL -->
+  <div class="panel-overlay" id="socialPanel">
+    <div class="panel" id="socialPanelInner">
+      <div class="panel-header">
+        <div class="panel-tabs">
+          <button class="panel-tab active" id="tabFriends" onclick="switchSocialTab('friends')">Friends</button>
+          <button class="panel-tab" id="tabMessages" onclick="switchSocialTab('messages')">Messages <span class="unread-badge" id="totalUnread" style="display:none"></span></button>
+        </div>
+        <button class="panel-close" onclick="closeSocialPanel()">&times;</button>
+      </div>
+
+      <!-- FRIENDS TAB -->
+      <div id="friendsTab">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
+          <div style="display:flex;gap:8px;">
+            <input class="form-input" id="addFriendInput" placeholder="Enter username..." style="flex:1;padding:8px 12px;" />
+            <button class="btn btn-primary" style="padding:8px 14px;font-size:13px;" onclick="sendFriendRequest()">Add</button>
+          </div>
+          <div class="form-error" id="friendError" style="margin-top:6px;"></div>
+        </div>
+
+        <div id="pendingSection" style="display:none;">
+          <div class="panel-section-label">Pending Requests</div>
+          <div id="pendingList"></div>
+        </div>
+
+        <div class="panel-section-label">Friends</div>
+        <div id="friendsList">
+          <div class="panel-empty">No friends yet. Add someone above!</div>
+        </div>
+      </div>
+
+      <!-- MESSAGES TAB -->
+      <div id="messagesTab" style="display:none;">
+        <div id="dmList" style="overflow-y:auto;max-height:calc(100vh - 160px);"></div>
+      </div>
+
+      <!-- DM CHAT VIEW -->
+      <div id="chatView" style="display:none;flex-direction:column;height:calc(100vh - 56px);">
+        <div class="panel-header" style="border-bottom:1px solid var(--border);">
+          <button class="btn-back" onclick="backToDMs()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div style="display:flex;align-items:center;gap:8px;flex:1;">
+            <div class="friend-avatar" id="chatAvatar"></div>
+            <div>
+              <div style="font-weight:700;font-size:14px;" id="chatName"></div>
+              <div style="font-size:11px;color:var(--muted);" id="chatStatus"></div>
+            </div>
+          </div>
+          <button class="panel-close" onclick="closeSocialPanel()">&times;</button>
+        </div>
+        <div id="chatMessages" style="flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;"></div>
+        <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;">
+          <input class="form-input" id="chatInput" placeholder="Message..." style="flex:1;padding:8px 12px;" />
+          <button class="btn btn-primary" style="padding:8px 14px;" onclick="sendMessage()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -866,6 +1013,7 @@
         saveTokens(data.access_token, data.refresh_token);
         currentProfile = data.user;
         renderLoggedIn(data.user);
+        startHeartbeat();
         closeModal();
         showToast(`Welcome to Brickverse, ${data.user.display_name || data.user.username}!`);
 
@@ -881,6 +1029,7 @@
         saveTokens(data.access_token, data.refresh_token);
         currentProfile = data.user;
         renderLoggedIn(data.user);
+        startHeartbeat();
         closeModal();
         showToast(`Welcome back, ${data.user.display_name || data.user.username}!`);
       }
@@ -937,6 +1086,7 @@
           body: JSON.stringify({ refresh_token: refreshToken }),
         });
         clearTokens();
+        stopHeartbeat();
         currentProfile = null;
         renderLoggedOut();
         showToast('Signed out.');
@@ -983,10 +1133,241 @@
       if (res.ok) {
         currentProfile = await res.json();
         renderLoggedIn(currentProfile);
+        startHeartbeat();
       } else {
         clearTokens();
       }
     })();
+
+    // ─── SOCIAL PANEL ────────────────────────────────────────
+    let activeDmConversation = null;
+    let dmPollInterval = null;
+    let heartbeatInterval = null;
+
+    function openSocialPanel(tab = 'friends') {
+      document.getElementById('socialPanel').classList.add('open');
+      switchSocialTab(tab);
+      loadFriends();
+    }
+    function closeSocialPanel() {
+      document.getElementById('socialPanel').classList.remove('open');
+      clearInterval(dmPollInterval);
+      activeDmConversation = null;
+    }
+    document.getElementById('socialPanel').addEventListener('click', e => {
+      if (e.target === document.getElementById('socialPanel')) closeSocialPanel();
+    });
+
+    function switchSocialTab(tab) {
+      document.getElementById('tabFriends').classList.toggle('active', tab === 'friends');
+      document.getElementById('tabMessages').classList.toggle('active', tab === 'messages');
+      document.getElementById('friendsTab').style.display  = tab === 'friends'  ? 'block' : 'none';
+      document.getElementById('messagesTab').style.display = tab === 'messages' ? 'block' : 'none';
+      document.getElementById('chatView').style.display    = 'none';
+      if (tab === 'messages') loadDMList();
+    }
+
+    function isOnline(lastSeen) {
+      if (!lastSeen) return false;
+      return (Date.now() - new Date(lastSeen).getTime()) < 3 * 60 * 1000; // 3 min
+    }
+
+    function avatarHtml(user, size = 36) {
+      const initials = (user.display_name || user.username || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+      const online = isOnline(user.last_seen);
+      return `<div class="friend-avatar" style="width:${size}px;height:${size}px;">
+        ${user.avatar_url ? `<img src="${user.avatar_url}" alt="" />` : initials}
+        ${online ? '<div class="online-dot"></div>' : ''}
+      </div>`;
+    }
+
+    // ── FRIENDS ──────────────────────────────────────────────
+    async function loadFriends() {
+      if (!accessToken) return;
+      const res = await apiFetch('/api/friends');
+      if (!res.ok) return;
+      const all = await res.json();
+
+      const accepted = all.filter(f => f.status === 'accepted');
+      const pending  = all.filter(f => f.status === 'pending' && f.requested_by !== currentProfile?.id);
+
+      // Pending
+      const pendingSection = document.getElementById('pendingSection');
+      const pendingList    = document.getElementById('pendingList');
+      if (pending.length) {
+        pendingSection.style.display = 'block';
+        pendingList.innerHTML = pending.map(f => `
+          <div class="friend-row">
+            ${avatarHtml(f)}
+            <div class="friend-info">
+              <div class="friend-name">${f.display_name || f.username}</div>
+              <div class="friend-status">@${f.username} wants to be friends</div>
+            </div>
+            <div class="friend-actions">
+              <button class="btn-icon accept" title="Accept" onclick="respondFriend('${f.username}','accept')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+              <button class="btn-icon decline" title="Decline" onclick="respondFriend('${f.username}','decline')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>`).join('');
+      } else {
+        pendingSection.style.display = 'none';
+      }
+
+      // Accepted
+      const friendsList = document.getElementById('friendsList');
+      if (accepted.length) {
+        friendsList.innerHTML = accepted.map(f => `
+          <div class="friend-row" onclick="openDMWithUser('${f.username}', ${JSON.stringify(f).replace(/"/g,'&quot;')})">
+            ${avatarHtml(f)}
+            <div class="friend-info">
+              <div class="friend-name">${f.display_name || f.username}</div>
+              <div class="friend-status">${isOnline(f.last_seen) ? '<span style="color:var(--green);">● Online</span>' : 'Offline'}</div>
+            </div>
+            <div class="friend-actions">
+              <button class="btn-icon" title="Message" onclick="event.stopPropagation();openDMWithUser('${f.username}', ${JSON.stringify(f).replace(/"/g,'&quot;')})">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </button>
+            </div>
+          </div>`).join('');
+      } else {
+        friendsList.innerHTML = '<div class="panel-empty">No friends yet. Add someone above!</div>';
+      }
+    }
+
+    async function sendFriendRequest() {
+      const input = document.getElementById('addFriendInput');
+      const errEl = document.getElementById('friendError');
+      const username = input.value.trim().toLowerCase();
+      errEl.style.display = 'none';
+      if (!username) return;
+
+      const res  = await apiFetch(`/api/friends/request/${username}`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) { errEl.textContent = data.error; errEl.style.display = 'block'; return; }
+      input.value = '';
+      showToast(`Friend request sent to @${username}!`);
+      loadFriends();
+    }
+
+    async function respondFriend(username, action) {
+      const res = await apiFetch(`/api/friends/respond/${username}`, {
+        method: 'POST',
+        body: JSON.stringify({ action }),
+      });
+      if (res.ok) { loadFriends(); showToast(action === 'accept' ? 'Friend added!' : 'Request declined.'); }
+    }
+
+    // ── DMs ──────────────────────────────────────────────────
+    async function loadDMList() {
+      const res = await apiFetch('/api/dms');
+      if (!res.ok) return;
+      const convs = await res.json();
+
+      const totalUnread = convs.reduce((s, c) => s + parseInt(c.unread_count || 0), 0);
+      const badge = document.getElementById('totalUnread');
+      if (totalUnread > 0) { badge.textContent = totalUnread; badge.style.display = 'inline'; }
+      else { badge.style.display = 'none'; }
+
+      const dmList = document.getElementById('dmList');
+      if (!convs.length) {
+        dmList.innerHTML = '<div class="panel-empty">No messages yet. Add a friend and start chatting!</div>';
+        return;
+      }
+      dmList.innerHTML = convs.map(c => `
+        <div class="dm-row" onclick="openDMConversation('${c.conversation_id}', ${JSON.stringify(c).replace(/"/g,'&quot;')})">
+          ${avatarHtml(c)}
+          <div class="friend-info" style="min-width:0;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span class="friend-name">${c.display_name || c.username}</span>
+              ${parseInt(c.unread_count) > 0 ? `<span class="unread-badge">${c.unread_count}</span>` : ''}
+            </div>
+            <div class="dm-last">${c.last_message || 'No messages yet'}</div>
+          </div>
+        </div>`).join('');
+    }
+
+    async function openDMWithUser(username, userObj) {
+      const res  = await apiFetch(`/api/dms/${username}`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.error, 'error'); return; }
+      openDMConversation(data.conversation_id, { ...userObj, conversation_id: data.conversation_id });
+    }
+
+    function openDMConversation(convId, meta) {
+      activeDmConversation = convId;
+      document.getElementById('friendsTab').style.display  = 'none';
+      document.getElementById('messagesTab').style.display = 'none';
+      const chatView = document.getElementById('chatView');
+      chatView.style.display = 'flex';
+
+      document.getElementById('chatAvatar').innerHTML =
+        meta.avatar_url ? `<img src="${meta.avatar_url}" alt="" />` : (meta.display_name || meta.username || '?').slice(0,2).toUpperCase();
+      document.getElementById('chatName').textContent   = meta.display_name || meta.username;
+      document.getElementById('chatStatus').textContent = isOnline(meta.last_seen) ? '● Online' : 'Offline';
+      document.getElementById('chatStatus').style.color = isOnline(meta.last_seen) ? 'var(--green)' : 'var(--muted)';
+
+      loadMessages();
+      clearInterval(dmPollInterval);
+      dmPollInterval = setInterval(loadMessages, 3000);
+
+      document.getElementById('chatInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+      });
+    }
+
+    async function loadMessages() {
+      if (!activeDmConversation) return;
+      const res = await apiFetch(`/api/dms/${activeDmConversation}/messages`);
+      if (!res.ok) return;
+      const msgs = await res.json();
+      const container = document.getElementById('chatMessages');
+      const wasAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
+
+      container.innerHTML = msgs.map(m => {
+        const mine = m.sender_id === currentProfile?.id;
+        const time = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return `<div class="chat-msg ${mine ? 'mine' : 'theirs'}">
+          <div class="chat-bubble">${escapeHtml(m.content)}</div>
+          <div class="chat-time">${time}</div>
+        </div>`;
+      }).join('');
+
+      if (wasAtBottom || msgs.length < 5) container.scrollTop = container.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const input   = document.getElementById('chatInput');
+      const content = input.value.trim();
+      if (!content || !activeDmConversation) return;
+      input.value = '';
+      const res = await apiFetch(`/api/dms/${activeDmConversation}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      });
+      if (res.ok) loadMessages();
+    }
+
+    function backToDMs() {
+      clearInterval(dmPollInterval);
+      activeDmConversation = null;
+      document.getElementById('chatView').style.display    = 'none';
+      document.getElementById('messagesTab').style.display = 'block';
+      loadDMList();
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── HEARTBEAT (online status) ────────────────────────────
+    function startHeartbeat() {
+      apiFetch('/api/me/heartbeat', { method: 'POST' });
+      heartbeatInterval = setInterval(() => apiFetch('/api/me/heartbeat', { method: 'POST' }), 60000);
+    }
+    function stopHeartbeat() { clearInterval(heartbeatInterval); }
   </script>
 
 </body>
