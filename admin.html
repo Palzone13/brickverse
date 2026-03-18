@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Brickverse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #7C3AED; --bg: #0F0F13; --surface: #1A1A24; --surface2: #22222F;
+      --border: rgba(255,255,255,0.08); --text: #F0EFF8; --muted: #8B89A0;
+      --tag-bg: rgba(124,58,237,0.18); --tag-color: #A78BFA;
+      --green: #22C55E; --red: #EF4444; --amber: #F59E0B;
+    }
+    html, body { min-height: 100vh; background: var(--bg); font-family: 'Nunito Sans', sans-serif; color: var(--text); }
+
+    .topbar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px; height: 56px; gap: 16px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 22px; letter-spacing: -0.5px; color: var(--text); display: flex; align-items: center; gap: 8px; text-decoration: none; }
+    .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+    .admin-badge { background: rgba(239,68,68,0.18); color: var(--red); border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; padding: 3px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; }
+
+    .layout { display: grid; grid-template-columns: 200px 1fr; min-height: calc(100vh - 56px); }
+
+    .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 16px 12px; }
+    .sidebar-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 0 8px; margin-bottom: 6px; margin-top: 16px; }
+    .sidebar-label:first-child { margin-top: 0; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px;
+      cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 600;
+      transition: background 0.12s, color 0.12s; border: none; background: none;
+      font-family: inherit; width: 100%; text-align: left;
+    }
+    .nav-item:hover, .nav-item.active { background: var(--surface2); color: var(--text); }
+    .nav-item.active { color: #A78BFA; }
+
+    .content { padding: 28px; overflow-y: auto; }
+    .page-title { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 22px; margin-bottom: 24px; }
+
+    /* STAT CARDS */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .stat-label { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .stat-value { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 28px; }
+    .stat-card.green .stat-value { color: var(--green); }
+    .stat-card.purple .stat-value { color: #A78BFA; }
+    .stat-card.amber .stat-value { color: var(--amber); }
+    .stat-card.blue .stat-value { color: #67E8F9; }
+
+    /* TABLE */
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .table-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); gap: 12px; }
+    .table-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 18px; border-bottom: 1px solid var(--border); }
+    td { padding: 12px 18px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+    .user-cell { display: flex; align-items: center; gap: 10px; }
+    .user-ava { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg,#7C3AED,#06B6D4); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; font-family: 'Nunito',sans-serif; color: #fff; overflow: hidden; flex-shrink: 0; }
+    .user-ava img { width: 100%; height: 100%; object-fit: cover; }
+    .username-text { font-weight: 700; }
+    .email-text { font-size: 11px; color: var(--muted); }
+
+    /* BADGES */
+    .badge { display: inline-flex; align-items: center; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; }
+    .badge-admin { background: rgba(239,68,68,0.15); color: var(--red); }
+    .badge-online { background: rgba(34,197,94,0.12); color: var(--green); }
+
+    /* ACTION BUTTONS */
+    .btn { border-radius: 7px; padding: 6px 12px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 5px; transition: opacity 0.15s, background 0.15s; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text); }
+    .btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+    .btn-danger:hover { background: rgba(239,68,68,0.1); }
+    .btn-amber { background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
+    .btn-amber:hover { background: rgba(245,158,11,0.25); }
+    .action-group { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* SEARCH */
+    .search-wrap { position: relative; }
+    .search-wrap input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 7px 12px 7px 32px; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.15s; width: 240px; }
+    .search-wrap input:focus { border-color: var(--accent); }
+    .search-wrap input::placeholder { color: var(--muted); }
+    .search-wrap svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 24px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 100%; max-width: 400px; position: relative; }
+    .modal-title { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 18px; margin-bottom: 6px; }
+    .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+    .modal-close { position: absolute; top: 14px; right: 14px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.15s; }
+    .form-input:focus { border-color: var(--accent); }
+    .quick-amounts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .quick-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.12s; }
+    .quick-btn:hover { background: var(--tag-bg); border-color: var(--accent); color: var(--tag-color); }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 13px; font-weight: 600; z-index: 2000; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
+    .toast.show { opacity: 1; }
+    .toast.success { border-color: rgba(34,197,94,0.4); color: var(--green); }
+    .toast.error { border-color: rgba(239,68,68,0.4); color: var(--red); }
+
+    /* ACCESS DENIED */
+    .denied { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 56px); gap: 12px; }
+    .denied-icon { font-size: 48px; margin-bottom: 8px; }
+    .denied h2 { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 22px; }
+    .denied p { color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="/" class="logo"><div class="logo-dot"></div>Brickverse</a>
+  <span class="admin-badge">ADMIN</span>
+  <div style="flex:1;"></div>
+  <a href="/" style="font-size:13px;font-weight:700;color:var(--muted);text-decoration:none;">← Back to site</a>
+</header>
+
+<div id="app">
+  <div class="denied">
+    <div class="denied-icon">🔒</div>
+    <h2>Checking access...</h2>
+  </div>
+</div>
+
+<!-- BRICKS MODAL -->
+<div class="modal-overlay" id="bricksModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeBricksModal()">&times;</button>
+    <div class="modal-title" id="bricksModalTitle">Give Bricks</div>
+    <div class="modal-sub" id="bricksModalSub"></div>
+    <div class="form-group">
+      <label class="form-label">Amount (use negative to deduct)</label>
+      <input class="form-input" type="number" id="bricksAmount" placeholder="e.g. 1000" />
+      <div class="quick-amounts">
+        <button class="quick-btn" onclick="setAmount(100)">+100</button>
+        <button class="quick-btn" onclick="setAmount(500)">+500</button>
+        <button class="quick-btn" onclick="setAmount(1000)">+1,000</button>
+        <button class="quick-btn" onclick="setAmount(5000)">+5,000</button>
+        <button class="quick-btn" onclick="setAmount(10000)">+10,000</button>
+        <button class="quick-btn" onclick="setAmount(-100)" style="color:var(--red);">-100</button>
+        <button class="quick-btn" onclick="setAmount(-500)" style="color:var(--red);">-500</button>
+      </div>
+    </div>
+    <div id="bricksError" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none;"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="submitBricks('add')">Give Bricks</button>
+      <button class="btn btn-ghost" onclick="closeBricksModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- SET BRICKS MODAL -->
+<div class="modal-overlay" id="setBricksModal">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('setBricksModal').classList.remove('open')">&times;</button>
+    <div class="modal-title">Set Bricks</div>
+    <div class="modal-sub" id="setBricksModalSub"></div>
+    <div class="form-group">
+      <label class="form-label">Set balance to exact amount</label>
+      <input class="form-input" type="number" id="setBricksAmount" placeholder="e.g. 5000" min="0" />
+    </div>
+    <div id="setBricksError" style="color:var(--red);font-size:12px;margin-bottom:10px;display:none;"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="submitBricks('set')">Set Balance</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('setBricksModal').classList.remove('open')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = 'https://labor-headline-block-tough.trycloudflare.com';
+  const accessToken = localStorage.getItem('bv_access') || null;
+  let currentUser = null;
+  let selectedUser = null;
+  let allUsers = [];
+  let searchTimeout = null;
+
+  async function apiFetch(path, options = {}) {
+    const headers = { 'Content-Type': 'application/json', ...(options.headers||{}) };
+    if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+    return fetch(API + path, { ...options, headers });
+  }
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function isOnline(lastSeen) {
+    return lastSeen && (Date.now() - new Date(lastSeen).getTime()) < 3 * 60 * 1000;
+  }
+
+  // ─── INIT ─────────────────────────────────────────────────
+  (async () => {
+    if (!accessToken) { showDenied('Not logged in.'); return; }
+    const r = await apiFetch('/api/me');
+    if (!r.ok) { showDenied('Could not verify session.'); return; }
+    currentUser = await r.json();
+    if (!currentUser.is_admin) { showDenied(`@${currentUser.username} does not have admin access.`); return; }
+    renderAdmin();
+  })();
+
+  function showDenied(msg) {
+    document.getElementById('app').innerHTML = `
+      <div class="denied">
+        <div class="denied-icon">🔒</div>
+        <h2>Access Denied</h2>
+        <p>${msg}</p>
+        <a href="/" style="margin-top:12px;background:var(--accent);color:#fff;padding:9px 20px;border-radius:8px;font-weight:700;text-decoration:none;font-size:13px;">Go Home</a>
+      </div>`;
+  }
+
+  function renderAdmin() {
+    document.getElementById('app').innerHTML = `
+      <div class="layout">
+        <nav class="sidebar">
+          <div class="sidebar-label">Admin</div>
+          <button class="nav-item active" id="navOverview" onclick="showSection('overview')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Overview
+          </button>
+          <button class="nav-item" id="navUsers" onclick="showSection('users')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Users
+          </button>
+          <button class="nav-item" id="navBricks" onclick="showSection('bricks')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+            Give Bricks
+          </button>
+        </nav>
+        <div class="content" id="mainContent"></div>
+      </div>`;
+    showSection('overview');
+  }
+
+  function showSection(section) {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.getElementById('nav' + section.charAt(0).toUpperCase() + section.slice(1))?.classList.add('active');
+    if (section === 'overview') renderOverview();
+    else if (section === 'users') renderUsers();
+    else if (section === 'bricks') renderBricksSection();
+  }
+
+  // ─── OVERVIEW ────────────────────────────────────────────
+  async function renderOverview() {
+    const content = document.getElementById('mainContent');
+    content.innerHTML = `<div class="page-title">Overview</div><div class="stats-grid" id="statsGrid"><div style="color:var(--muted);font-size:13px;">Loading...</div></div>`;
+    const res = await apiFetch('/api/admin/stats');
+    if (!res.ok) return;
+    const s = await res.json();
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card green"><div class="stat-label">Total Users</div><div class="stat-value">${s.total_users.toLocaleString()}</div></div>
+      <div class="stat-card purple"><div class="stat-label">Online Now</div><div class="stat-value">${s.online_now.toLocaleString()}</div></div>
+      <div class="stat-card amber"><div class="stat-label">Total Groups</div><div class="stat-value">${s.total_groups.toLocaleString()}</div></div>
+      <div class="stat-card blue"><div class="stat-label">Total Messages</div><div class="stat-value">${s.total_messages.toLocaleString()}</div></div>`;
+  }
+
+  // ─── USERS ───────────────────────────────────────────────
+  async function renderUsers(q = '') {
+    const content = document.getElementById('mainContent');
+    content.innerHTML = `
+      <div class="page-title">Users</div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">All Users</div>
+          <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input placeholder="Search users..." id="userSearchInput" oninput="debouncedSearch(this.value)" value="${q}" />
+          </div>
+        </div>
+        <div id="usersTableBody" style="overflow-x:auto;">
+          <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Loading...</div>
+        </div>
+      </div>`;
+    await fetchAndRenderUsers(q);
+  }
+
+  function debouncedSearch(q) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => fetchAndRenderUsers(q), 350);
+  }
+
+  async function fetchAndRenderUsers(q = '') {
+    const res = await apiFetch(`/api/admin/users?q=${encodeURIComponent(q)}`);
+    if (!res.ok) return;
+    const { users, total } = await res.json();
+    allUsers = users;
+    const tbody = document.getElementById('usersTableBody');
+    if (!users.length) { tbody.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">No users found.</div>'; return; }
+    tbody.innerHTML = `<table>
+      <thead><tr>
+        <th>User</th><th>Bricks</th><th>Status</th><th>Joined</th><th>Actions</th>
+      </tr></thead>
+      <tbody>${users.map(u => {
+        const initials = (u.display_name||u.username||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+        const online = isOnline(u.last_seen);
+        const joined = new Date(u.created_at).toLocaleDateString();
+        return `<tr>
+          <td>
+            <div class="user-cell">
+              <div class="user-ava">${u.avatar_url ? `<img src="${u.avatar_url}" alt="" />` : initials}</div>
+              <div>
+                <div class="username-text">@${u.username} ${u.is_admin ? '<span class="badge badge-admin">ADMIN</span>' : ''}</div>
+                <div class="email-text">${u.email}</div>
+              </div>
+            </div>
+          </td>
+          <td><span style="font-family:'Nunito',sans-serif;font-weight:800;color:var(--tag-color);">${(u.bricks||0).toLocaleString()}</span></td>
+          <td>${online ? '<span class="badge badge-online">Online</span>' : '<span style="font-size:12px;color:var(--muted);">Offline</span>'}</td>
+          <td style="color:var(--muted);font-size:12px;">${joined}</td>
+          <td>
+            <div class="action-group">
+              <button class="btn btn-amber" onclick="openBricksModal('${u.id}','${u.username}',${u.bricks||0})">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+                Bricks
+              </button>
+              ${currentUser.id !== u.id ? `
+              <button class="btn btn-ghost" onclick="toggleAdmin('${u.id}','${u.username}',${u.is_admin})">${u.is_admin ? 'Revoke Admin' : 'Make Admin'}</button>
+              <button class="btn btn-danger" onclick="deleteUser('${u.id}','${u.username}')">Delete</button>` : '<span style="font-size:11px;color:var(--muted);">You</span>'}
+            </div>
+          </td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+    <div style="padding:10px 18px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);">Showing ${users.length} of ${total} users</div>`;
+  }
+
+  // ─── BRICKS SECTION ──────────────────────────────────────
+  async function renderBricksSection() {
+    const content = document.getElementById('mainContent');
+    content.innerHTML = `
+      <div class="page-title">Give Bricks</div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">Select a User</div>
+          <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input placeholder="Search users..." id="bricksSearchInput" oninput="debouncedBricksSearch(this.value)" />
+          </div>
+        </div>
+        <div id="bricksUserList">
+          <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Loading...</div>
+        </div>
+      </div>`;
+    await fetchBricksUsers('');
+  }
+
+  function debouncedBricksSearch(q) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => fetchBricksUsers(q), 350);
+  }
+
+  async function fetchBricksUsers(q) {
+    const res = await apiFetch(`/api/admin/users?q=${encodeURIComponent(q)}`);
+    if (!res.ok) return;
+    const { users } = await res.json();
+    const container = document.getElementById('bricksUserList');
+    if (!users.length) { container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);">No users found.</div>'; return; }
+    container.innerHTML = `<table><thead><tr><th>User</th><th>Current Bricks</th><th>Actions</th></tr></thead><tbody>` +
+      users.map(u => {
+        const initials = (u.display_name||u.username||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+        return `<tr>
+          <td>
+            <div class="user-cell">
+              <div class="user-ava">${u.avatar_url ? `<img src="${u.avatar_url}" alt="" />` : initials}</div>
+              <div class="username-text">@${u.username}</div>
+            </div>
+          </td>
+          <td><span style="font-family:'Nunito',sans-serif;font-weight:800;color:var(--tag-color);">${(u.bricks||0).toLocaleString()}</span></td>
+          <td>
+            <div class="action-group">
+              <button class="btn btn-amber" onclick="openBricksModal('${u.id}','${u.username}',${u.bricks||0})">Give / Take</button>
+              <button class="btn btn-ghost" onclick="openSetBricksModal('${u.id}','${u.username}',${u.bricks||0})">Set Amount</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('') + `</tbody></table>`;
+  }
+
+  // ─── BRICKS MODAL ────────────────────────────────────────
+  function openBricksModal(userId, username, currentBricks) {
+    selectedUser = { id: userId, username, bricks: currentBricks };
+    document.getElementById('bricksModalTitle').textContent = `Give / Take Bricks`;
+    document.getElementById('bricksModalSub').textContent = `@${username} currently has ${currentBricks.toLocaleString()} bricks`;
+    document.getElementById('bricksAmount').value = '';
+    document.getElementById('bricksError').style.display = 'none';
+    document.getElementById('bricksModal').classList.add('open');
+  }
+
+  function openSetBricksModal(userId, username, currentBricks) {
+    selectedUser = { id: userId, username, bricks: currentBricks };
+    document.getElementById('setBricksModalSub').textContent = `@${username} currently has ${currentBricks.toLocaleString()} bricks`;
+    document.getElementById('setBricksAmount').value = '';
+    document.getElementById('setBricksError').style.display = 'none';
+    document.getElementById('setBricksModal').classList.add('open');
+  }
+
+  function closeBricksModal() { document.getElementById('bricksModal').classList.remove('open'); }
+
+  function setAmount(n) { document.getElementById('bricksAmount').value = n; }
+
+  async function submitBricks(mode) {
+    if (!selectedUser) return;
+    const isSet = mode === 'set';
+    const inputId = isSet ? 'setBricksAmount' : 'bricksAmount';
+    const errId   = isSet ? 'setBricksError'  : 'bricksError';
+    const amount  = parseInt(document.getElementById(inputId).value);
+    const errEl   = document.getElementById(errId);
+    errEl.style.display = 'none';
+    if (isNaN(amount)) { errEl.textContent = 'Enter a valid number'; errEl.style.display = 'block'; return; }
+    if (isSet && amount < 0) { errEl.textContent = 'Amount cannot be negative'; errEl.style.display = 'block'; return; }
+
+    const endpoint = isSet
+      ? `/api/admin/users/${selectedUser.id}/bricks/set`
+      : `/api/admin/users/${selectedUser.id}/bricks`;
+
+    const res  = await apiFetch(endpoint, { method:'POST', body: JSON.stringify({ amount }) });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error; errEl.style.display = 'block'; return; }
+
+    document.getElementById(isSet ? 'setBricksModal' : 'bricksModal').classList.remove('open');
+    showToast(`@${data.username} now has ${data.bricks.toLocaleString()} bricks!`);
+
+    // Refresh whichever list is visible
+    const bricksSearch = document.getElementById('bricksSearchInput');
+    const userSearch   = document.getElementById('userSearchInput');
+    if (bricksSearch) fetchBricksUsers(bricksSearch.value);
+    if (userSearch)   fetchAndRenderUsers(userSearch.value);
+  }
+
+  // ─── ADMIN TOGGLE ────────────────────────────────────────
+  async function toggleAdmin(userId, username, isAdmin) {
+    if (!confirm(`${isAdmin ? 'Revoke' : 'Grant'} admin access for @${username}?`)) return;
+    const res = await apiFetch(`/api/admin/users/${userId}/toggle-admin`, { method:'POST' });
+    if (res.ok) {
+      const d = await res.json();
+      showToast(`@${username} is ${d.is_admin ? 'now an admin' : 'no longer an admin'}`);
+      fetchAndRenderUsers(document.getElementById('userSearchInput')?.value || '');
+    }
+  }
+
+  // ─── DELETE USER ─────────────────────────────────────────
+  async function deleteUser(userId, username) {
+    if (!confirm(`Permanently delete @${username}? This cannot be undone.`)) return;
+    const res = await apiFetch(`/api/admin/users/${userId}`, { method:'DELETE' });
+    if (res.ok) {
+      showToast(`@${username} deleted.`);
+      fetchAndRenderUsers(document.getElementById('userSearchInput')?.value || '');
+    }
+  }
+
+  // Close modals on overlay click
+  ['bricksModal','setBricksModal'].forEach(id => {
+    document.getElementById(id).addEventListener('click', e => {
+      if (e.target === document.getElementById(id)) document.getElementById(id).classList.remove('open');
+    });
+  });
+</script>
+</body>
+</html>
