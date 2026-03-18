@@ -569,6 +569,17 @@
     .chat-msg.theirs .chat-bubble { background: var(--surface2); color: var(--text); border-bottom-left-radius: 3px; }
     .chat-time { font-size: 10px; color: var(--muted); margin-top: 3px; }
     .chat-read { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .notif-btn {
+      position: relative; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; color: var(--muted);
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .notif-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+    .notif-dot {
+      position: absolute; top: 5px; right: 5px; width: 8px; height: 8px;
+      border-radius: 50%; background: var(--red); border: 2px solid var(--bg);
+    }
     @media (max-width: 640px) {
       .main { grid-template-columns: 1fr; }
       .sidebar { display: none; }
@@ -1046,6 +1057,10 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
           ${bricks}
         </div>
+        <button class="notif-btn" id="notifBtn" onclick="openSocialPanel('friends')" title="Notifications">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-dot" id="notifDot" style="display:none;"></span>
+        </button>
         <div class="user-menu" id="userMenu">
           <button class="user-btn" id="userBtn">
             <div class="user-avatar">
@@ -1365,9 +1380,33 @@
     // ── HEARTBEAT (online status) ────────────────────────────
     function startHeartbeat() {
       apiFetch('/api/me/heartbeat', { method: 'POST' });
-      heartbeatInterval = setInterval(() => apiFetch('/api/me/heartbeat', { method: 'POST' }), 60000);
+      pollNotifications();
+      heartbeatInterval = setInterval(() => {
+        apiFetch('/api/me/heartbeat', { method: 'POST' });
+        pollNotifications();
+      }, 30000);
     }
     function stopHeartbeat() { clearInterval(heartbeatInterval); }
+
+    async function pollNotifications() {
+      const dot = document.getElementById('notifDot');
+      if (!dot) return;
+      const res = await apiFetch('/api/friends');
+      if (!res.ok) return;
+      const all = await res.json();
+      const pendingCount = all.filter(f => f.status === 'pending' && f.requested_by !== currentProfile?.id).length;
+
+      const dmRes = await apiFetch('/api/dms');
+      let unreadDms = 0;
+      if (dmRes.ok) {
+        const convs = await dmRes.json();
+        unreadDms = convs.reduce((s, c) => s + parseInt(c.unread_count || 0), 0);
+        const badge = document.getElementById('totalUnread');
+        if (badge) { badge.textContent = unreadDms || ''; badge.style.display = unreadDms ? 'inline' : 'none'; }
+      }
+
+      dot.style.display = (pendingCount + unreadDms) > 0 ? 'block' : 'none';
+    }
   </script>
 
 </body>
