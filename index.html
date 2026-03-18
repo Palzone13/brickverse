@@ -1340,6 +1340,7 @@
 
     function openDMConversation(convId, meta) {
       activeDmConversation = convId;
+      lastMessageCount = 0;
       document.getElementById('friendsTab').style.display  = 'none';
       document.getElementById('messagesTab').style.display = 'none';
       const chatView = document.getElementById('chatView');
@@ -1367,6 +1368,14 @@
       const msgs = await res.json();
       const container = document.getElementById('chatMessages');
       const wasAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
+
+      // Play sound if new messages arrived from the other person
+      const newCount = msgs.length;
+      if (newCount > lastMessageCount && lastMessageCount > 0) {
+        const latest = msgs[msgs.length - 1];
+        if (latest.sender_id !== currentProfile?.id) playNotifSound();
+      }
+      lastMessageCount = newCount;
 
       container.innerHTML = msgs.map(m => {
         const mine = m.sender_id === currentProfile?.id;
@@ -1435,7 +1444,25 @@
       dot.style.display = (pendingCount + unreadDms) > 0 ? 'block' : 'none';
     }
 
-    // ─── USER SEARCH ─────────────────────────────────────────
+    // ─── NOTIFICATION SOUND ──────────────────────────────────
+    let lastMessageCount = 0;
+
+    function playNotifSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o1 = ctx.createOscillator();
+        const o2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+        o1.connect(gain); o2.connect(gain); gain.connect(ctx.destination);
+        o1.type = 'sine'; o1.frequency.setValueAtTime(880, ctx.currentTime);
+        o1.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+        o2.type = 'sine'; o2.frequency.setValueAtTime(660, ctx.currentTime);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        o1.start(ctx.currentTime); o1.stop(ctx.currentTime + 0.4);
+        o2.start(ctx.currentTime); o2.stop(ctx.currentTime + 0.2);
+      } catch(e) {}
+    }
     let userSearchTimeout = null;
 
     function openUserSearch() {
