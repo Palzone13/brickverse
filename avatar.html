@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Avatar — Brickverse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #7C3AED; --bg: #0F0F13; --surface: #1A1A24; --surface2: #22222F;
+      --border: rgba(255,255,255,0.08); --text: #F0EFF8; --muted: #8B89A0;
+      --tag-bg: rgba(124,58,237,0.18); --tag-color: #A78BFA;
+      --green: #22C55E; --red: #EF4444;
+    }
+    html, body { min-height: 100vh; background: var(--bg); font-family: 'Nunito Sans', sans-serif; color: var(--text); }
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; height: 56px; gap: 16px; }
+    .logo { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 22px; color: var(--text); display: flex; align-items: center; gap: 8px; text-decoration: none; }
+    .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+    .back-btn { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; font-weight: 700; background: none; border: none; cursor: pointer; font-family: inherit; text-decoration: none; transition: color 0.15s; }
+    .back-btn:hover { color: var(--text); }
+    .btn { border-radius: 8px; padding: 9px 20px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.15s; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text); }
+
+    .page { max-width: 1000px; margin: 0 auto; padding: 32px 24px; display: grid; grid-template-columns: 300px 1fr; gap: 24px; }
+    @media(max-width:700px) { .page { grid-template-columns: 1fr; } }
+
+    /* PREVIEW */
+    .preview-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; position: sticky; top: 20px; height: fit-content; }
+    .preview-title { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 16px; }
+    #avatarCanvas { border-radius: 8px; background: linear-gradient(135deg, #1e1040, #0d2040); }
+    .preview-name { font-size: 14px; font-weight: 700; color: var(--muted); }
+
+    /* EDITOR */
+    .editor-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+    .editor-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    .etab { padding: 10px 16px; font-size: 13px; font-weight: 700; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-family: inherit; transition: color 0.15s, border-color 0.15s; }
+    .etab.active { color: var(--text); border-bottom-color: var(--accent); }
+    .section-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; margin-bottom: 12px; margin-top: 20px; }
+    .section-title:first-child { margin-top: 0; }
+
+    /* COLOR PARTS */
+    .part-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+    .part-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .part-label { font-size: 12px; font-weight: 700; color: var(--muted); }
+    .part-color-row { display: flex; align-items: center; gap: 8px; }
+    .part-swatch { width: 32px; height: 32px; border-radius: 6px; border: 2px solid var(--border); cursor: pointer; }
+    .part-hex { font-size: 11px; color: var(--muted); font-family: monospace; }
+
+    /* COLOR PRESETS */
+    .color-presets { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+    .color-dot { width: 20px; height: 20px; border-radius: 4px; cursor: pointer; border: 2px solid transparent; transition: transform 0.1s, border-color 0.1s; }
+    .color-dot:hover { transform: scale(1.15); }
+    .color-dot.active { border-color: #fff; transform: scale(0.9); }
+
+    /* FACE */
+    .face-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .face-btn { background: var(--surface2); border: 2px solid var(--border); border-radius: 10px; padding: 10px 5px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; color: var(--muted); transition: all 0.12s; }
+    .face-btn:hover, .face-btn.active { border-color: var(--accent); color: var(--tag-color); background: var(--tag-bg); }
+    .face-emoji { font-size: 24px; line-height: 1; }
+
+    /* HATS */
+    .hat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .hat-btn { background: var(--surface2); border: 2px solid var(--border); border-radius: 10px; padding: 10px 5px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; color: var(--muted); transition: all 0.12s; aspect-ratio: 1; justify-content: center; }
+    .hat-btn:hover, .hat-btn.active { border-color: var(--accent); color: var(--tag-color); background: var(--tag-bg); }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 13px; font-weight: 600; z-index: 2000; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
+    .toast.show { opacity: 1; }
+    .toast.success { border-color: rgba(34,197,94,0.4); color: var(--green); }
+    .toast.error { border-color: rgba(239,68,68,0.4); color: var(--red); }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="/" class="logo"><div class="logo-dot"></div>Brickverse</a>
+  <a href="/" class="back-btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+    Back
+  </a>
+  <div style="flex:1;"></div>
+  <button class="btn btn-ghost" onclick="resetAvatar()">Reset</button>
+  <button class="btn btn-primary" onclick="saveAvatar()">Save Avatar</button>
+</header>
+
+<div class="page">
+  <!-- PREVIEW -->
+  <div class="preview-card">
+    <div class="preview-title">Preview</div>
+    <canvas id="avatarCanvas" width="200" height="280"></canvas>
+    <div class="preview-name" id="previewName">@loading...</div>
+    <div style="font-size:12px;color:var(--muted);text-align:center;">This is how your character looks in-game</div>
+  </div>
+
+  <!-- EDITOR -->
+  <div class="editor-card">
+    <div class="editor-tabs">
+      <button class="etab active" onclick="switchTab(this,'colors')">Body Colors</button>
+      <button class="etab" onclick="switchTab(this,'face')">Face</button>
+      <button class="etab" onclick="switchTab(this,'hats')">Hats</button>
+      <button class="etab" onclick="switchTab(this,'clothing')">Clothing</button>
+    </div>
+
+    <!-- COLORS TAB -->
+    <div id="tab-colors">
+      <div class="section-title">Body Part Colors</div>
+      <div class="part-grid" id="partGrid"></div>
+    </div>
+
+    <!-- FACE TAB -->
+    <div id="tab-face" style="display:none;">
+      <div class="section-title">Face Expression</div>
+      <div class="face-grid" id="faceGrid"></div>
+    </div>
+
+    <!-- HATS TAB -->
+    <div id="tab-hats" style="display:none;">
+      <div class="section-title">Hats & Accessories</div>
+      <div class="hat-grid" id="hatGrid"></div>
+    </div>
+
+    <!-- CLOTHING TAB -->
+    <div id="tab-clothing" style="display:none;">
+      <div class="section-title">Shirt Color</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <input type="color" id="shirtColorPick" style="width:40px;height:36px;border:none;border-radius:6px;cursor:pointer;padding:0;" oninput="avatar.shirtColor=this.value;drawAvatar()" />
+        <div class="color-presets" id="shirtPresets"></div>
+      </div>
+      <div class="section-title">Pants Color</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <input type="color" id="pantsColorPick" style="width:40px;height:36px;border:none;border-radius:6px;cursor:pointer;padding:0;" oninput="avatar.pantsColor=this.value;drawAvatar()" />
+        <div class="color-presets" id="pantsPresets"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = 'https://api.bricksverse.org';
+  const accessToken = localStorage.getItem('bv_access') || null;
+  let currentUser = null;
+
+  const SKIN_TONES = ['#FDDBB4','#F5CBA7','#E8A87C','#D4905A','#C68642','#A0522D','#7B4B2A','#5C3317'];
+  const CLOTHING_COLORS = ['#2874A6','#1A5276','#7D3C98','#6C3483','#1E8449','#1A5276','#E74C3C','#C0392B','#D4AC0D','#B7950B','#F0F0F0','#2C3E50','#000000','#95A5A6'];
+  const BODY_COLORS = [...SKIN_TONES,'#F0F0F0','#E74C3C','#E67E22','#F1C40F','#2ECC71','#3498DB','#9B59B6','#1ABC9C','#2C3E50'];
+
+  const FACES = [
+    { id:'smile',    emoji:'😊', label:'Smile'    },
+    { id:'happy',    emoji:'😄', label:'Happy'    },
+    { id:'cool',     emoji:'😎', label:'Cool'     },
+    { id:'serious',  emoji:'😐', label:'Serious'  },
+    { id:'sad',      emoji:'😢', label:'Sad'      },
+    { id:'angry',    emoji:'😠', label:'Angry'    },
+    { id:'surprised',emoji:'😮', label:'Surprised'},
+    { id:'wink',     emoji:'😉', label:'Wink'     },
+    { id:'laugh',    emoji:'😂', label:'Laugh'    },
+    { id:'cool2',    emoji:'🤩', label:'Star'     },
+  ];
+
+  const HATS = [
+    { id:'none',      label:'None',       svg:'<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="8" x2="16" y2="16" stroke="currentColor" stroke-width="1.5"/>' },
+    { id:'cap',       label:'Cap',        svg:'<path d="M4 14h16M12 4c-4 0-8 2-8 6v4h16v-4c0-4-4-6-8-6z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M16 14l3 2" fill="none" stroke="currentColor" stroke-width="1.5"/>' },
+    { id:'tophat',    label:'Top Hat',    svg:'<rect x="7" y="6" width="10" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 14h14" stroke="currentColor" stroke-width="1.5"/>' },
+    { id:'crown',     label:'Crown',      svg:'<path d="M4 16V10l4 4 4-6 4 6 4-4v6H4z" fill="none" stroke="currentColor" stroke-width="1.5"/>' },
+    { id:'hardhat',   label:'Hard Hat',   svg:'<path d="M6 16v-3a6 6 0 0 1 12 0v3H6z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4 16h16" stroke="currentColor" stroke-width="1.5"/>' },
+    { id:'cowboy',    label:'Cowboy',     svg:'<path d="M3 14h18M6 14c0-6 12-6 12 0M5 14l-2 2h18l-2-2" fill="none" stroke="currentColor" stroke-width="1.5"/>' },
+    { id:'beanie',    label:'Beanie',     svg:'<path d="M7 16V12a5 5 0 0 1 10 0v4H7z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/>' },
+    { id:'helmet',    label:'Helmet',     svg:'<path d="M6 16v-5a6 6 0 0 1 12 0v5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4 16h16M10 16v-8" stroke="currentColor" stroke-width="1.5"/>' },
+  ];
+
+  const BODY_PARTS = [
+    { key:'headColor',    label:'Head'       },
+    { key:'torsoColor',   label:'Torso'      },
+    { key:'leftArmColor', label:'Left Arm'   },
+    { key:'rightArmColor',label:'Right Arm'  },
+    { key:'leftLegColor', label:'Left Leg'   },
+    { key:'rightLegColor',label:'Right Leg'  },
+  ];
+
+  let avatar = {
+    headColor:'#F5CBA7', torsoColor:'#2874A6',
+    leftArmColor:'#2874A6', rightArmColor:'#2874A6',
+    leftLegColor:'#1A5276', rightLegColor:'#1A5276',
+    face:'smile', hat:'none',
+    shirtColor:'#2874A6', pantsColor:'#1A5276',
+  };
+
+  // ─── DRAW AVATAR ─────────────────────────────────────────────
+  function drawAvatar() {
+    const canvas = document.getElementById('avatarCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const cx = W / 2;
+    const scale = 1.4;
+
+    // Torso (shirt color)
+    ctx.fillStyle = avatar.shirtColor;
+    roundRect(ctx, cx-22*scale, 95, 44*scale, 52*scale, 4);
+    ctx.fill();
+    // Torso outline
+    ctx.strokeStyle = darken(avatar.shirtColor, 0.3);
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, cx-22*scale, 95, 44*scale, 52*scale, 4);
+    ctx.stroke();
+
+    // Left arm
+    ctx.fillStyle = avatar.leftArmColor;
+    roundRect(ctx, cx-34*scale, 98, 12*scale, 44*scale, 4);
+    ctx.fill();
+    ctx.strokeStyle = darken(avatar.leftArmColor, 0.3);
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, cx-34*scale, 98, 12*scale, 44*scale, 4);
+    ctx.stroke();
+
+    // Right arm
+    ctx.fillStyle = avatar.rightArmColor;
+    roundRect(ctx, cx+22*scale, 98, 12*scale, 44*scale, 4);
+    ctx.fill();
+    ctx.strokeStyle = darken(avatar.rightArmColor, 0.3);
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, cx+22*scale, 98, 12*scale, 44*scale, 4);
+    ctx.stroke();
+
+    // Left leg (pants)
+    ctx.fillStyle = avatar.pantsColor;
+    roundRect(ctx, cx-20*scale, 148, 18*scale, 56*scale, 4);
+    ctx.fill();
+    ctx.strokeStyle = darken(avatar.pantsColor, 0.3);
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, cx-20*scale, 148, 18*scale, 56*scale, 4);
+    ctx.stroke();
+
+    // Right leg
+    ctx.fillStyle = avatar.pantsColor;
+    roundRect(ctx, cx+2*scale, 148, 18*scale, 56*scale, 4);
+    ctx.fill();
+    ctx.strokeStyle = darken(avatar.pantsColor, 0.3);
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, cx+2*scale, 148, 18*scale, 56*scale, 4);
+    ctx.stroke();
+
+    // Head
+    ctx.fillStyle = avatar.headColor;
+    roundRect(ctx, cx-24*scale, 34, 48*scale, 54*scale, 8);
+    ctx.fill();
+    ctx.strokeStyle = darken(avatar.headColor, 0.25);
+    ctx.lineWidth = 2;
+    roundRect(ctx, cx-24*scale, 34, 48*scale, 54*scale, 8);
+    ctx.stroke();
+
+    // Neck
+    ctx.fillStyle = avatar.headColor;
+    ctx.fillRect(cx - 8, 84, 16, 14);
+
+    // Face
+    drawFace(ctx, cx, 60, scale);
+
+    // Hat
+    drawHat(ctx, cx, 34, scale);
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  function drawFace(ctx, cx, cy, scale) {
+    const face = avatar.face;
+    ctx.save();
+    // Eyes
+    ctx.fillStyle = '#2C3E50';
+    if (face === 'wink') {
+      ctx.beginPath(); ctx.arc(cx - 10, cy - 4, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#2C3E50'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(cx + 6, cy - 6); ctx.lineTo(cx + 14, cy - 2); ctx.stroke();
+    } else if (face === 'cool' || face === 'cool2') {
+      ctx.fillStyle = '#1a1a2e';
+      roundRect(ctx, cx - 16, cy - 9, 13, 8, 2); ctx.fill();
+      roundRect(ctx, cx + 3, cy - 9, 13, 8, 2); ctx.fill();
+    } else {
+      ctx.beginPath(); ctx.arc(cx - 10, cy - 4, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 10, cy - 4, 4, 0, Math.PI * 2); ctx.fill();
+    }
+    // Eye shine
+    if (face !== 'cool' && face !== 'cool2') {
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(cx - 8, cy - 6, 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 12, cy - 6, 1.5, 0, Math.PI * 2); ctx.fill();
+    }
+    // Mouth
+    ctx.strokeStyle = '#2C3E50'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+    ctx.beginPath();
+    if (face === 'smile' || face === 'happy' || face === 'laugh' || face === 'cool' || face === 'cool2' || face === 'wink') {
+      ctx.arc(cx, cy + 6, 8, 0.2, Math.PI - 0.2); ctx.stroke();
+    } else if (face === 'sad') {
+      ctx.arc(cx, cy + 18, 8, Math.PI + 0.2, -0.2); ctx.stroke();
+    } else if (face === 'angry') {
+      ctx.moveTo(cx - 8, cy + 10); ctx.lineTo(cx + 8, cy + 10); ctx.stroke();
+      ctx.strokeStyle = '#E74C3C'; ctx.lineWidth = 2;
+      ctx.moveTo(cx - 13, cy - 10); ctx.lineTo(cx - 6, cy - 6); ctx.stroke();
+      ctx.moveTo(cx + 13, cy - 10); ctx.lineTo(cx + 6, cy - 6); ctx.stroke();
+    } else if (face === 'surprised') {
+      ctx.beginPath(); ctx.arc(cx, cy + 10, 5, 0, Math.PI * 2); ctx.stroke();
+    } else {
+      ctx.moveTo(cx - 8, cy + 10); ctx.lineTo(cx + 8, cy + 10); ctx.stroke();
+    }
+    if (face === 'laugh') {
+      ctx.fillStyle = '#2C3E50';
+      ctx.beginPath(); ctx.arc(cx, cy + 10, 6, 0.2, Math.PI - 0.2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawHat(ctx, cx, headTop, scale) {
+    ctx.save();
+    ctx.fillStyle = '#2C3E50';
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth = 1.5;
+    switch(avatar.hat) {
+      case 'cap':
+        ctx.fillStyle = '#E74C3C';
+        roundRect(ctx, cx - 28*scale, headTop - 12, 56*scale, 18, 6); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#C0392B';
+        roundRect(ctx, cx - 24*scale, headTop - 22, 48*scale, 14, 4); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#E74C3C';
+        roundRect(ctx, cx + 20*scale, headTop - 10, 18, 8, 2); ctx.fill(); ctx.stroke();
+        break;
+      case 'tophat':
+        ctx.fillStyle = '#1a1a1a';
+        roundRect(ctx, cx - 34*scale, headTop - 2, 68*scale, 8, 2); ctx.fill(); ctx.stroke();
+        roundRect(ctx, cx - 20*scale, headTop - 36, 40*scale, 36, 3); ctx.fill(); ctx.stroke();
+        break;
+      case 'crown':
+        ctx.fillStyle = '#F1C40F';
+        ctx.beginPath();
+        ctx.moveTo(cx - 26*scale, headTop);
+        ctx.lineTo(cx - 26*scale, headTop - 20);
+        ctx.lineTo(cx - 14*scale, headTop - 10);
+        ctx.lineTo(cx, headTop - 26);
+        ctx.lineTo(cx + 14*scale, headTop - 10);
+        ctx.lineTo(cx + 26*scale, headTop - 20);
+        ctx.lineTo(cx + 26*scale, headTop);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+        break;
+      case 'hardhat':
+        ctx.fillStyle = '#F39C12';
+        roundRect(ctx, cx - 30*scale, headTop - 4, 60*scale, 8, 2); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx, headTop - 4, 28*scale, Math.PI, 0); ctx.fill(); ctx.stroke();
+        break;
+      case 'cowboy':
+        ctx.fillStyle = '#8B6914';
+        roundRect(ctx, cx - 36*scale, headTop - 2, 72*scale, 8, 2); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx, headTop, 22*scale, Math.PI, 0); ctx.fill(); ctx.stroke();
+        break;
+      case 'beanie':
+        ctx.fillStyle = '#8E44AD';
+        ctx.beginPath(); ctx.arc(cx, headTop + 4, 28*scale, Math.PI, 0); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx, headTop - 22, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        break;
+      case 'helmet':
+        ctx.fillStyle = '#2C3E50';
+        ctx.beginPath(); ctx.arc(cx, headTop + 6, 30*scale, Math.PI, 0); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#3D5A6C';
+        roundRect(ctx, cx - 26*scale, headTop + 6, 18, 16, 2); ctx.fill();
+        break;
+    }
+    ctx.restore();
+  }
+
+  function darken(hex, amount) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const r = Math.max(0, (num >> 16) - Math.round(255 * amount));
+    const g = Math.max(0, ((num >> 8) & 0xff) - Math.round(255 * amount));
+    const b = Math.max(0, (num & 0xff) - Math.round(255 * amount));
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+
+  // ─── BUILD UI ─────────────────────────────────────────────────
+  function buildBodyColors() {
+    const grid = document.getElementById('partGrid');
+    grid.innerHTML = BODY_PARTS.map(part => `
+      <div class="part-item">
+        <div class="part-label">${part.label}</div>
+        <div class="part-color-row">
+          <input type="color" class="part-swatch" id="swatch_${part.key}" value="${avatar[part.key]}" oninput="avatar['${part.key}']=this.value;drawAvatar();upSwatchHex('${part.key}')" />
+          <span class="part-hex" id="hex_${part.key}">${avatar[part.key]}</span>
+        </div>
+        <div class="color-presets">${BODY_COLORS.map(c=>`<div class="color-dot" style="background:${c};" onclick="setPartColor('${part.key}','${c}')"></div>`).join('')}</div>
+      </div>`).join('');
+  }
+
+  function upSwatchHex(key) {
+    document.getElementById('hex_'+key).textContent = avatar[key];
+  }
+
+  function setPartColor(key, color) {
+    avatar[key] = color;
+    document.getElementById('swatch_'+key).value = color;
+    document.getElementById('hex_'+key).textContent = color;
+    drawAvatar();
+  }
+
+  function buildFaces() {
+    document.getElementById('faceGrid').innerHTML = FACES.map(f => `
+      <button class="face-btn ${avatar.face===f.id?'active':''}" onclick="setFace('${f.id}',this)">
+        <span class="face-emoji">${f.emoji}</span>
+        ${f.label}
+      </button>`).join('');
+  }
+
+  function setFace(id, btn) {
+    avatar.face = id;
+    document.querySelectorAll('.face-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    drawAvatar();
+  }
+
+  function buildHats() {
+    document.getElementById('hatGrid').innerHTML = HATS.map(h => `
+      <button class="hat-btn ${avatar.hat===h.id?'active':''}" onclick="setHat('${h.id}',this)">
+        <svg width="32" height="32" viewBox="0 0 24 24">${h.svg}</svg>
+        ${h.label}
+      </button>`).join('');
+  }
+
+  function setHat(id, btn) {
+    avatar.hat = id;
+    document.querySelectorAll('.hat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    drawAvatar();
+  }
+
+  function buildClothing() {
+    const shirtPre = document.getElementById('shirtPresets');
+    const pantsPre = document.getElementById('pantsPresets');
+    shirtPre.innerHTML = CLOTHING_COLORS.map(c => `<div class="color-dot" style="background:${c};" onclick="avatar.shirtColor='${c}';document.getElementById('shirtColorPick').value='${c}';drawAvatar()"></div>`).join('');
+    pantsPre.innerHTML = CLOTHING_COLORS.map(c => `<div class="color-dot" style="background:${c};" onclick="avatar.pantsColor='${c}';document.getElementById('pantsColorPick').value='${c}';drawAvatar()"></div>`).join('');
+    document.getElementById('shirtColorPick').value = avatar.shirtColor;
+    document.getElementById('pantsColorPick').value = avatar.pantsColor;
+  }
+
+  function switchTab(btn, tab) {
+    document.querySelectorAll('.etab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    ['colors','face','hats','clothing'].forEach(t => {
+      document.getElementById('tab-'+t).style.display = t === tab ? 'block' : 'none';
+    });
+  }
+
+  // ─── SAVE / LOAD ─────────────────────────────────────────────
+  async function apiFetch(path, options = {}) {
+    const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+    if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+    return fetch(API + path, { ...options, headers });
+  }
+
+  async function loadAvatar() {
+    if (!accessToken) { window.location.href = '/'; return; }
+    const res = await apiFetch('/api/me');
+    if (!res.ok) { window.location.href = '/'; return; }
+    const user = await res.json();
+    currentUser = user;
+    document.getElementById('previewName').textContent = '@' + user.username;
+    const aRes = await apiFetch('/api/me/avatar-data');
+    if (aRes.ok) { const d = await aRes.json(); avatar = { ...avatar, ...d }; }
+    buildBodyColors(); buildFaces(); buildHats(); buildClothing(); drawAvatar();
+  }
+
+  async function saveAvatar() {
+    const res = await apiFetch('/api/me/avatar-data', { method: 'POST', body: JSON.stringify({ avatar_data: avatar }) });
+    if (res.ok) showToast('Avatar saved!');
+    else showToast('Save failed', 'error');
+  }
+
+  function resetAvatar() {
+    avatar = { headColor:'#F5CBA7', torsoColor:'#2874A6', leftArmColor:'#2874A6', rightArmColor:'#2874A6', leftLegColor:'#1A5276', rightLegColor:'#1A5276', face:'smile', hat:'none', shirtColor:'#2874A6', pantsColor:'#1A5276' };
+    buildBodyColors(); buildFaces(); buildHats(); buildClothing(); drawAvatar();
+  }
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  loadAvatar();
+</script>
+</body>
+</html>
