@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catalog — Brickverse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #7C3AED; --bg: #0F0F13; --surface: #1A1A24; --surface2: #22222F;
+      --border: rgba(255,255,255,0.08); --text: #F0EFF8; --muted: #8B89A0;
+      --tag-bg: rgba(124,58,237,0.18); --tag-color: #A78BFA;
+      --green: #22C55E; --red: #EF4444; --amber: #F59E0B;
+    }
+    html, body { min-height: 100vh; background: var(--bg); font-family: 'Nunito Sans', sans-serif; color: var(--text); }
+
+    /* TOPBAR */
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; height: 56px; gap: 16px; position: sticky; top: 0; z-index: 100; }
+    .logo { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 22px; color: var(--text); display: flex; align-items: center; gap: 8px; text-decoration: none; }
+    .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+    .topbar-links { display: flex; gap: 6px; }
+    .topbar-link { font-size: 13px; font-weight: 700; color: var(--muted); text-decoration: none; padding: 5px 10px; border-radius: 6px; transition: color 0.15s, background 0.15s; }
+    .topbar-link:hover { color: var(--text); background: var(--surface2); }
+    .topbar-link.active { color: var(--tag-color); background: var(--tag-bg); }
+    .topbar-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+    .bricks-pill { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 13px; font-weight: 800; color: var(--tag-color); }
+    .btn { border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.15s; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text); }
+
+    /* LAYOUT */
+    .page { max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
+
+    /* HEADER */
+    .page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .page-title { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 28px; }
+    .page-header-right { margin-left: auto; display: flex; gap: 8px; }
+
+    /* FILTERS */
+    .filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
+    .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+    .search-input { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 12px 8px 34px; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.15s; }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--muted); }
+    .filter-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.12s; white-space: nowrap; }
+    .filter-btn:hover, .filter-btn.active { background: var(--tag-bg); border-color: var(--accent); color: var(--tag-color); }
+
+    /* TABS */
+    .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .tab { padding: 10px 16px; font-size: 13px; font-weight: 700; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-family: inherit; transition: color 0.15s, border-color 0.15s; }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+    /* GRID */
+    .catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .item-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; cursor: pointer; transition: transform 0.15s, border-color 0.15s; }
+    .item-card:hover { transform: translateY(-3px); border-color: rgba(124,58,237,0.4); }
+    .item-thumb { aspect-ratio: 1; background: linear-gradient(135deg, #1e1040, #0d2040); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+    .item-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .item-thumb-icon { font-size: 40px; opacity: 0.4; }
+    .item-type-badge { position: absolute; top: 8px; left: 8px; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-model { background: rgba(59,130,246,0.2); color: #60A5FA; }
+    .badge-texture { background: rgba(34,197,94,0.2); color: #4ADE80; }
+    .badge-audio { background: rgba(245,158,11,0.2); color: #FCD34D; }
+    .badge-image { background: rgba(236,72,153,0.2); color: #F472B6; }
+    .item-free-badge { position: absolute; top: 8px; right: 8px; background: rgba(34,197,94,0.2); color: #4ADE80; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 4px; }
+    .item-info { padding: 12px; }
+    .item-name { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-creator { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+    .item-footer { display: flex; align-items: center; justify-content: space-between; }
+    .item-price { font-size: 13px; font-weight: 800; color: var(--tag-color); display: flex; align-items: center; gap: 4px; }
+    .item-price.free { color: var(--green); }
+    .item-sales { font-size: 10px; color: var(--muted); }
+
+    /* UPLOAD MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; display: none; align-items: center; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 520px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .modal-title { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 18px; }
+    .modal-close { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; }
+    .modal-body { padding: 20px 24px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.15s; }
+    .form-input:focus { border-color: var(--accent); }
+    .form-input::placeholder { color: var(--muted); }
+    textarea.form-input { resize: vertical; min-height: 80px; }
+    .file-drop { border: 2px dashed var(--border); border-radius: 10px; padding: 24px; text-align: center; cursor: pointer; transition: border-color 0.15s; }
+    .file-drop:hover, .file-drop.over { border-color: var(--accent); background: var(--tag-bg); }
+    .file-drop p { font-size: 13px; color: var(--muted); margin-top: 8px; }
+    .file-drop .file-name { font-size: 12px; color: var(--tag-color); font-weight: 700; margin-top: 4px; }
+    .price-row { display: flex; align-items: center; gap: 10px; }
+    .price-prefix { font-size: 18px; font-weight: 800; color: var(--tag-color); }
+    .revenue-note { font-size: 11px; color: var(--muted); margin-top: 6px; }
+    .revenue-note b { color: var(--green); }
+    .modal-footer { padding: 16px 24px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+
+    /* ITEM DETAIL MODAL */
+    .detail-thumb { aspect-ratio: 16/9; background: linear-gradient(135deg,#1e1040,#0d2040); display: flex; align-items: center; justify-content: center; border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+    .detail-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .detail-name { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 22px; margin-bottom: 4px; }
+    .detail-creator { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+    .detail-desc { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
+    .detail-stats { display: flex; gap: 16px; margin-bottom: 20px; }
+    .detail-stat { text-align: center; }
+    .detail-stat-val { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 20px; color: var(--tag-color); }
+    .detail-stat-lbl { font-size: 11px; color: var(--muted); }
+    .buy-section { background: var(--surface2); border-radius: 10px; padding: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .buy-price { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 24px; color: var(--tag-color); }
+    .buy-price.free { color: var(--green); }
+
+    /* EMPTY */
+    .empty { text-align: center; padding: 60px 24px; color: var(--muted); }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+    .empty p { font-size: 14px; }
+
+    /* TOAST */
+    #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 13px; font-weight: 600; z-index: 2000; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
+    #toast.show { opacity: 1; }
+    #toast.success { border-color: rgba(34,197,94,0.4); color: var(--green); }
+    #toast.error { border-color: rgba(239,68,68,0.4); color: var(--red); }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="/" class="logo"><div class="logo-dot"></div>Brickverse</a>
+  <nav class="topbar-links">
+    <a href="/" class="topbar-link">Home</a>
+    <a href="/catalog.html" class="topbar-link active">Catalog</a>
+    <a href="/avatar.html" class="topbar-link">Avatar</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="bricks-pill" id="bricksPill" style="display:none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+      <span id="bricksCount">0</span>
+    </div>
+    <button class="btn btn-primary" id="uploadBtn" onclick="openUpload()" style="display:none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Upload
+    </button>
+  </div>
+</header>
+
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Catalog</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:3px;">Buy and sell 3D models, textures, audio, and more</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(this,'browse')">Browse</button>
+    <button class="tab" onclick="switchTab(this,'myitems')" id="myitemsTab" style="display:none;">My Items</button>
+    <button class="tab" onclick="switchTab(this,'purchased')" id="purchasedTab" style="display:none;">Purchased</button>
+  </div>
+
+  <!-- BROWSE TAB -->
+  <div id="tab-browse">
+    <div class="filters">
+      <div class="search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="search-input" id="searchInput" placeholder="Search catalog..." oninput="searchCatalog(this.value)" />
+      </div>
+      <button class="filter-btn active" onclick="setFilter(this,'')" data-type="">All</button>
+      <button class="filter-btn" onclick="setFilter(this,'model')" data-type="model">3D Models</button>
+      <button class="filter-btn" onclick="setFilter(this,'texture')" data-type="texture">Textures</button>
+      <button class="filter-btn" onclick="setFilter(this,'audio')" data-type="audio">Audio</button>
+      <button class="filter-btn" onclick="setFilter(this,'image')" data-type="image">Images</button>
+      <select class="filter-btn" id="sortSelect" onchange="loadCatalog()" style="padding-right:8px;">
+        <option value="newest">Newest</option>
+        <option value="popular">Most Popular</option>
+        <option value="free">Free First</option>
+      </select>
+    </div>
+    <div class="catalog-grid" id="catalogGrid">
+      <div class="empty"><div class="empty-icon">📦</div><p>Loading catalog...</p></div>
+    </div>
+  </div>
+
+  <!-- MY ITEMS TAB -->
+  <div id="tab-myitems" style="display:none;">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+      <button class="btn btn-primary" onclick="openUpload()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Upload New Item
+      </button>
+    </div>
+    <div class="catalog-grid" id="myItemsGrid"></div>
+  </div>
+
+  <!-- PURCHASED TAB -->
+  <div id="tab-purchased" style="display:none;">
+    <div class="catalog-grid" id="purchasedGrid"></div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Upload to Catalog</div>
+      <button class="modal-close" onclick="closeUpload()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Name *</label>
+        <input class="form-input" id="uploadName" placeholder="e.g. Sci-Fi Crate Pack" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-input" id="uploadDesc" placeholder="Describe your item..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-input" id="uploadType">
+          <option value="model">3D Model (.obj, .fbx, .gltf, .glb, .stl)</option>
+          <option value="texture">Texture (.png, .jpg)</option>
+          <option value="audio">Audio (.mp3, .wav, .ogg)</option>
+          <option value="image">Image (.png, .jpg, .gif)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">File *</label>
+        <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <p>Click to choose file or drag & drop</p>
+          <div class="file-name" id="fileNameLabel">No file chosen</div>
+        </div>
+        <input type="file" id="fileInput" style="display:none;" accept=".obj,.fbx,.gltf,.glb,.stl,.dae,.png,.jpg,.jpeg,.gif,.mp3,.wav,.ogg" onchange="onFileSelect(this,'fileNameLabel')" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Thumbnail (optional)</label>
+        <div class="file-drop" onclick="document.getElementById('thumbInput').click()" style="padding:16px;">
+          <p>Upload a preview image</p>
+          <div class="file-name" id="thumbNameLabel">No file chosen</div>
+        </div>
+        <input type="file" id="thumbInput" style="display:none;" accept=".png,.jpg,.jpeg" onchange="onFileSelect(this,'thumbNameLabel')" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Price (Bricks)</label>
+        <div class="price-row">
+          <span class="price-prefix">⬡</span>
+          <input class="form-input" type="number" id="uploadPrice" value="0" min="0" step="10" placeholder="0 = Free" oninput="updateRevenueNote()" />
+        </div>
+        <div class="revenue-note" id="revenueNote">Free items — no earnings, but great for visibility!</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeUpload()" style="flex:1;">Cancel</button>
+      <button class="btn btn-primary" onclick="submitUpload()" style="flex:2;" id="uploadSubmitBtn">Submit for Review</button>
+    </div>
+  </div>
+</div>
+
+<!-- ITEM DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="detailTitle">Item</div>
+      <button class="modal-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const API = 'https://api.bricksverse.org';
+  const accessToken  = localStorage.getItem('bv_access');
+  const refreshToken = localStorage.getItem('bv_refresh');
+  let currentProfile = null;
+  let currentType    = '';
+  let searchTimer    = null;
+
+  const TYPE_ICONS = { model:'🧊', texture:'🎨', audio:'🎵', image:'🖼️' };
+
+  async function apiFetch(path, opts = {}) {
+    const headers = { 'Content-Type': 'application/json', ...(opts.headers||{}) };
+    if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+    return fetch(API + path, { ...opts, headers });
+  }
+
+  async function init() {
+    if (accessToken) {
+      const res = await apiFetch('/api/me');
+      if (res.ok) {
+        currentProfile = await res.json();
+        document.getElementById('bricksPill').style.display = 'flex';
+        document.getElementById('bricksCount').textContent = (currentProfile.bricks||0).toLocaleString();
+        document.getElementById('uploadBtn').style.display = 'flex';
+        document.getElementById('myitemsTab').style.display = 'block';
+        document.getElementById('purchasedTab').style.display = 'block';
+      }
+    }
+    loadCatalog();
+  }
+
+  async function loadCatalog() {
+    const q    = document.getElementById('searchInput').value.trim();
+    const sort = document.getElementById('sortSelect').value;
+    const grid = document.getElementById('catalogGrid');
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">📦</div><p>Loading...</p></div>';
+    const res = await apiFetch(`/api/catalog?q=${encodeURIComponent(q)}&type=${currentType}&sort=${sort}`);
+    const items = res.ok ? await res.json() : [];
+    renderGrid(grid, items);
+  }
+
+  function renderGrid(grid, items) {
+    if (!items.length) {
+      grid.innerHTML = '<div class="empty"><div class="empty-icon">📦</div><p>Nothing here yet.</p></div>';
+      return;
+    }
+    grid.innerHTML = items.map(item => itemCardHTML(item)).join('');
+  }
+
+  function itemCardHTML(item) {
+    const typeLabel = item.type || 'model';
+    const icon = TYPE_ICONS[typeLabel] || '📦';
+    const priceLabel = item.is_free || item.price === 0 ? 'Free' : `⬡ ${item.price.toLocaleString()}`;
+    const priceClass = item.is_free || item.price === 0 ? 'free' : '';
+    return `<div class="item-card" onclick="openDetail('${item.id}')">
+      <div class="item-thumb">
+        ${item.thumbnail_url ? `<img src="${API}${item.thumbnail_url}" alt="" />` : `<div class="item-thumb-icon">${icon}</div>`}
+        <span class="item-type-badge badge-${typeLabel}">${typeLabel}</span>
+        ${item.is_free||item.price===0 ? '<span class="item-free-badge">FREE</span>' : ''}
+      </div>
+      <div class="item-info">
+        <div class="item-name">${escHtml(item.name)}</div>
+        <div class="item-creator">by @${escHtml(item.creator_username)}</div>
+        <div class="item-footer">
+          <div class="item-price ${priceClass}">${priceLabel}</div>
+          <div class="item-sales">${item.sales_count||0} sales</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  async function openDetail(itemId) {
+    const res = await apiFetch(`/api/catalog/${itemId}`);
+    if (!res.ok) return;
+    const item = await res.json();
+
+    let isOwned = false;
+    if (currentProfile) {
+      const ownedRes = await apiFetch(`/api/catalog/${itemId}/owned`);
+      if (ownedRes.ok) { const d = await ownedRes.json(); isOwned = d.owned; }
+    }
+
+    const isFree = item.is_free || item.price === 0;
+    const icon = TYPE_ICONS[item.type] || '📦';
+    document.getElementById('detailTitle').textContent = item.name;
+    document.getElementById('detailBody').innerHTML = `
+      <div class="detail-thumb">
+        ${item.thumbnail_url ? `<img src="${API}${item.thumbnail_url}" alt="" />` : `<div style="font-size:60px;opacity:0.3;">${icon}</div>`}
+      </div>
+      <div class="detail-name">${escHtml(item.name)}</div>
+      <div class="detail-creator">by @${escHtml(item.creator_username)} · ${escHtml(item.type)}</div>
+      ${item.description ? `<div class="detail-desc">${escHtml(item.description)}</div>` : ''}
+      <div class="detail-stats">
+        <div class="detail-stat"><div class="detail-stat-val">${item.sales_count||0}</div><div class="detail-stat-lbl">Sales</div></div>
+        <div class="detail-stat"><div class="detail-stat-val" style="color:${isFree?'var(--green)':'var(--tag-color)'};">${isFree?'FREE':'⬡'+item.price.toLocaleString()}</div><div class="detail-stat-lbl">Price</div></div>
+      </div>
+      <div class="buy-section">
+        <div>
+          <div class="buy-price ${isFree?'free':''}">${isFree ? 'Free' : '⬡ '+item.price.toLocaleString()}</div>
+          ${!isFree?`<div style="font-size:11px;color:var(--muted);">Creator earns 70%</div>`:''}
+        </div>
+        ${!currentProfile
+          ? `<a href="/" class="btn btn-primary" style="text-decoration:none;">Log in to get</a>`
+          : isOwned
+            ? `<div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+                 <div style="color:var(--green);font-size:13px;font-weight:700;">✓ Owned</div>
+                 ${item.file_url ? `<a href="${API}${item.file_url}" download class="btn btn-primary" style="text-decoration:none;font-size:12px;padding:7px 14px;">Download</a>` : ''}
+               </div>`
+            : `<button class="btn btn-primary" onclick="purchaseItem('${item.id}',${item.price},'${escHtml(item.name)}')">${isFree?'Get for Free':'Buy Now'}</button>`
+        }
+      </div>`;
+    document.getElementById('detailModal').classList.add('show');
+  }
+
+  function closeDetail() { document.getElementById('detailModal').classList.remove('show'); }
+
+  async function purchaseItem(itemId, price, name) {
+    if (!currentProfile) return;
+    if (price > 0 && !confirm(`Buy "${name}" for ⬡${price.toLocaleString()} Bricks?`)) return;
+    const res = await apiFetch(`/api/catalog/${itemId}/purchase`, { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(`Got "${name}"!`);
+      document.getElementById('bricksCount').textContent = (data.bricks||0).toLocaleString();
+      currentProfile.bricks = data.bricks;
+      closeDetail();
+    } else {
+      showToast(data.error || 'Purchase failed', 'error');
+    }
+  }
+
+  // ─── UPLOAD ────────────────────────────────────────────────
+  function openUpload() {
+    if (!currentProfile) { window.location.href = '/'; return; }
+    document.getElementById('uploadModal').classList.add('show');
+  }
+  function closeUpload() { document.getElementById('uploadModal').classList.remove('show'); }
+
+  function onFileSelect(input, labelId) {
+    const name = input.files[0]?.name || 'No file chosen';
+    document.getElementById(labelId).textContent = name;
+  }
+
+  function updateRevenueNote() {
+    const price = parseInt(document.getElementById('uploadPrice').value) || 0;
+    const note  = document.getElementById('revenueNote');
+    if (price === 0) {
+      note.innerHTML = 'Free items — no earnings, but great for visibility!';
+    } else {
+      const earn = Math.floor(price * 0.70);
+      note.innerHTML = `You earn <b>⬡${earn}</b> per sale (70%). Admins share the remaining 30%.`;
+    }
+  }
+
+  async function submitUpload() {
+    const name  = document.getElementById('uploadName').value.trim();
+    const desc  = document.getElementById('uploadDesc').value.trim();
+    const type  = document.getElementById('uploadType').value;
+    const price = parseInt(document.getElementById('uploadPrice').value) || 0;
+    const file  = document.getElementById('fileInput').files[0];
+    const thumb = document.getElementById('thumbInput').files[0];
+
+    if (!name) { showToast('Name is required', 'error'); return; }
+    if (!file) { showToast('Please choose a file', 'error'); return; }
+
+    const btn = document.getElementById('uploadSubmitBtn');
+    btn.disabled = true; btn.textContent = 'Uploading...';
+
+    const fd = new FormData();
+    fd.append('name', name);
+    fd.append('description', desc);
+    fd.append('type', type);
+    fd.append('price', price);
+    fd.append('file', file);
+    if (thumb) fd.append('thumbnail', thumb);
+
+    try {
+      const res = await fetch(`${API}/api/catalog`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+        body: fd,
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Submitted for review! It will appear once approved.');
+        closeUpload();
+        // Reset form
+        document.getElementById('uploadName').value = '';
+        document.getElementById('uploadDesc').value = '';
+        document.getElementById('uploadPrice').value = '0';
+        document.getElementById('fileNameLabel').textContent = 'No file chosen';
+        document.getElementById('thumbNameLabel').textContent = 'No file chosen';
+      } else {
+        showToast(data.error || 'Upload failed', 'error');
+      }
+    } catch (e) {
+      showToast('Could not connect to server', 'error');
+    }
+    btn.disabled = false; btn.textContent = 'Submit for Review';
+  }
+
+  // ─── MY ITEMS ──────────────────────────────────────────────
+  async function loadMyItems() {
+    const res = await apiFetch('/api/catalog/mine/created');
+    const items = res.ok ? await res.json() : [];
+    const grid = document.getElementById('myItemsGrid');
+    if (!items.length) {
+      grid.innerHTML = '<div class="empty"><div class="empty-icon">📦</div><p>You haven\'t uploaded anything yet.</p></div>';
+      return;
+    }
+    grid.innerHTML = items.map(item => {
+      const statusBadge = item.is_approved
+        ? '<span style="background:rgba(34,197,94,0.15);color:var(--green);border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;">Approved</span>'
+        : '<span style="background:rgba(245,158,11,0.15);color:var(--amber);border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;">Pending Review</span>';
+      return `<div class="item-card">
+        <div class="item-thumb">
+          ${item.thumbnail_url ? `<img src="${API}${item.thumbnail_url}" />` : `<div class="item-thumb-icon">${TYPE_ICONS[item.type]||'📦'}</div>`}
+          <span class="item-type-badge badge-${item.type}">${item.type}</span>
+        </div>
+        <div class="item-info">
+          <div class="item-name">${escHtml(item.name)}</div>
+          <div style="margin-bottom:6px;">${statusBadge}</div>
+          <div class="item-footer">
+            <div class="item-price ${item.price===0?'free':''}">${item.price===0?'Free':'⬡'+item.price.toLocaleString()}</div>
+            <div class="item-sales">${item.sales_count||0} sales</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function loadPurchased() {
+    const res = await apiFetch('/api/catalog/mine/purchased');
+    const items = res.ok ? await res.json() : [];
+    renderGrid(document.getElementById('purchasedGrid'), items);
+  }
+
+  // ─── FILTERS ───────────────────────────────────────────────
+  function setFilter(btn, type) {
+    document.querySelectorAll('.filter-btn[data-type]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentType = type;
+    loadCatalog();
+  }
+
+  function searchCatalog(q) {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(loadCatalog, 350);
+  }
+
+  function switchTab(btn, tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    ['browse','myitems','purchased'].forEach(t => {
+      document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
+    });
+    if (tab === 'myitems') loadMyItems();
+    if (tab === 'purchased') loadPurchased();
+  }
+
+  // ─── HELPERS ───────────────────────────────────────────────
+  function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // Drag & drop
+  const fileDrop = document.getElementById('fileDrop');
+  fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.classList.add('over'); });
+  fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('over'));
+  fileDrop.addEventListener('drop', e => {
+    e.preventDefault(); fileDrop.classList.remove('over');
+    const file = e.dataTransfer.files[0];
+    if (file) { document.getElementById('fileInput').files = e.dataTransfer.files; document.getElementById('fileNameLabel').textContent = file.name; }
+  });
+
+  // Close modals on backdrop click
+  document.getElementById('uploadModal').addEventListener('click', e => { if (e.target.id==='uploadModal') closeUpload(); });
+  document.getElementById('detailModal').addEventListener('click', e => { if (e.target.id==='detailModal') closeDetail(); });
+
+  init();
+</script>
+</body>
+</html>
