@@ -550,6 +550,10 @@
     .btn-icon:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
     .btn-icon.accept:hover { color: var(--green); border-color: rgba(34,197,94,0.4); }
     .btn-icon.decline:hover { color: var(--red); border-color: rgba(239,68,68,0.4); }
+    .btn-icon.join-game-btn { color: #A78BFA; border-color: rgba(124,58,237,0.3); background: rgba(124,58,237,0.08); }
+    .btn-icon.join-game-btn:hover { color: #fff; background: var(--accent); border-color: var(--accent); }
+    .join-game-btn-full { display: flex; align-items: center; gap: 5px; background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.35); color: #A78BFA; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.12s; white-space: nowrap; }
+    .join-game-btn-full:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
     .unread-badge {
       background: var(--red); color: #fff; border-radius: 20px;
       font-size: 10px; font-weight: 800; padding: 1px 6px; min-width: 18px; text-align: center;
@@ -620,7 +624,10 @@
     <button class="nav-tab">Tycoon</button>
     <button class="nav-tab">Fighting</button>
     <button class="nav-tab">Simulator</button>
-    <a href="/download.html" style="margin-left:auto;margin-right:8px;background:var(--accent);color:#fff;border-radius:7px;padding:5px 14px;font-size:12px;font-weight:800;text-decoration:none;display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;">
+    <a href="/catalog.html" style="margin-left:8px;color:var(--muted);border-radius:7px;padding:5px 14px;font-size:12px;font-weight:800;text-decoration:none;display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;transition:color 0.15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">
+      🧊 Catalog
+    </a>
+    <a href="/download.html" style="margin-right:8px;background:var(--accent);color:#fff;border-radius:7px;padding:5px 14px;font-size:12px;font-weight:800;text-decoration:none;display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Download Client
     </a>
@@ -1225,8 +1232,46 @@
 
     function isOnline(lastSeen) {
       if (!lastSeen) return false;
-      return (Date.now() - new Date(lastSeen).getTime()) < 3 * 60 * 1000; // 3 min
+      return (Date.now() - new Date(lastSeen).getTime()) < 3 * 60 * 1000;
     }
+
+    function escHtml(s) {
+      return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function joinFriendGame(gameId, title, friendName) {
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;';
+      modal.innerHTML = `
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:340px;text-align:center;">
+          <div style="width:48px;height:48px;border-radius:12px;background:var(--tag-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--tag-color)" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </div>
+          <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:18px;margin-bottom:4px;">Join Game</div>
+          ${friendName ? `<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">@${escHtml(friendName)} is playing</div>` : ''}
+          <div style="font-size:15px;font-weight:800;margin-bottom:16px;">${escHtml(title)}</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button onclick="window.location.href='/download.html?join=${gameId}'"
+              style="background:var(--accent);border:none;color:#fff;border-radius:8px;padding:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Open in Brickverse Client
+            </button>
+            <button onclick="navigator.clipboard?.writeText('${gameId}');this.textContent='✓ Copied!';setTimeout(()=>this.textContent='Copy Game ID',2000);"
+              style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
+              Copy Game ID
+            </button>
+            <button onclick="this.closest('[style*=fixed]').remove()"
+              style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;padding:4px;">
+              Close
+            </button>
+          </div>
+        </div>`;
+      modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+      document.body.appendChild(modal);
+    }
+
+    // Auto-refresh friends list every 30s to update game status
+    setInterval(() => { if (document.getElementById('friendsPanel')?.style.display !== 'none') loadFriends(); }, 30000);
 
     function avatarHtml(user, size = 36) {
       const initials = (user.display_name || user.username || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
@@ -1275,19 +1320,43 @@
       // Accepted
       const friendsList = document.getElementById('friendsList');
       if (accepted.length) {
-        friendsList.innerHTML = accepted.map(f => `
+        // Fetch current game status for all friends
+        let currentGames = {};
+        try {
+          const cgRes = await apiFetch('/api/friends/current-games', {
+            method: 'POST',
+            body: JSON.stringify({ usernames: accepted.map(f => f.username) })
+          });
+          if (cgRes.ok) currentGames = await cgRes.json();
+        } catch {}
+
+        friendsList.innerHTML = accepted.map(f => {
+          const cg = currentGames[f.username];
+          const isPlaying = cg?.playing;
+          const joinBtn = isPlaying ? `
+            <button class="join-game-btn-full" title="Join ${escHtml(cg.title||'their game')}"
+              onclick="event.stopPropagation();joinFriendGame('${cg.gameId}','${escHtml(cg.title||'Game')}','${escHtml(f.username)}')">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Join
+            </button>` : '';
+          const statusHtml = isPlaying
+            ? `<div class="friend-status"><span style="color:#A78BFA;">▶ ${escHtml(cg.title||'In a game')}</span></div>`
+            : `<div class="friend-status">${isOnline(f.last_seen) ? '<span style="color:var(--green);">● Online</span>' : '<span style="color:var(--muted);">Offline</span>'}</div>`;
+          return `
           <div class="friend-row" onclick="openDMWithUser('${f.username}', ${JSON.stringify(f).replace(/"/g,'&quot;')})">
             ${avatarHtml(f)}
             <div class="friend-info">
-              <div class="friend-name">${f.display_name || f.username}</div>
-              <div class="friend-status">${isOnline(f.last_seen) ? '<span style="color:var(--green);">● Online</span>' : 'Offline'}</div>
+              <div class="friend-name">${escHtml(f.display_name || f.username)}</div>
+              ${statusHtml}
             </div>
             <div class="friend-actions">
+              ${joinBtn}
               <button class="btn-icon" title="Message" onclick="event.stopPropagation();openDMWithUser('${f.username}', ${JSON.stringify(f).replace(/"/g,'&quot;')})">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               </button>
             </div>
-          </div>`).join('');
+          </div>`;
+        }).join('');
       } else {
         friendsList.innerHTML = '<div class="panel-empty">No friends yet. Add someone above!</div>';
       }
