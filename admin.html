@@ -244,6 +244,10 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
             Give Bricks
           </button>
+          <button class="nav-item" id="navCatalog" onclick="showSection('catalog')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            Catalog Review
+          </button>
         </nav>
         <div class="content" id="mainContent"></div>
       </div>`;
@@ -256,6 +260,7 @@
     if (section === 'overview') renderOverview();
     else if (section === 'users') renderUsers();
     else if (section === 'bricks') renderBricksSection();
+    else if (section === 'catalog') renderCatalogReview();
   }
 
   // ─── OVERVIEW ────────────────────────────────────────────
@@ -464,6 +469,66 @@
       showToast(`@${username} deleted.`);
       fetchAndRenderUsers(document.getElementById('userSearchInput')?.value || '');
     }
+  }
+
+  // ─── CATALOG REVIEW ──────────────────────────────────────
+  async function renderCatalogReview() {
+    const content = document.getElementById('mainContent');
+    content.innerHTML = `<div class="page-title">Catalog Review</div><div id="catalogReviewList" style="margin-top:16px;"><div style="color:var(--muted);font-size:13px;">Loading...</div></div>`;
+
+    // Fetch all unapproved items — admin sees all
+    const res = await apiFetch('/api/catalog?sort=newest');
+    const approvedRes = await fetch(`${API}/api/catalog?sort=newest`).then(r=>r.json()).catch(()=>[]);
+
+    // Get pending items separately
+    const allRes = await apiFetch('/api/catalog/mine/created');
+    // Actually we need a dedicated admin endpoint — for now fetch from a special route
+    const pendingRes = await fetch(`${API}/api/admin/catalog/pending`, {
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
+    });
+
+    const list = document.getElementById('catalogReviewList');
+    if (!pendingRes.ok) {
+      list.innerHTML = '<div style="color:var(--muted);font-size:13px;">No pending items or endpoint not available. Run npm run migrate first.</div>';
+      return;
+    }
+    const items = await pendingRes.json();
+    if (!items.length) {
+      list.innerHTML = '<div style="color:var(--muted);font-size:13px;">No items pending review. 🎉</div>';
+      return;
+    }
+    list.innerHTML = items.map(item => `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;display:flex;gap:14px;align-items:flex-start;">
+        <div style="width:80px;height:80px;border-radius:8px;background:linear-gradient(135deg,#1e1040,#0d2040);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+          ${item.thumbnail_url ? `<img src="${API}${item.thumbnail_url}" style="width:100%;height:100%;object-fit:cover;" />` : '<div style="font-size:28px;opacity:0.4;">📦</div>'}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:\'Nunito\',sans-serif;font-weight:800;font-size:15px;margin-bottom:2px;">${escHtml(item.name)}</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">by @${escHtml(item.creator_username)} · ${escHtml(item.type)}</div>
+          ${item.description ? `<div style="font-size:12px;color:var(--muted);margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(item.description)}</div>` : ''}
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:12px;font-weight:700;color:var(--tag-color);">${item.price===0?'Free':'⬡'+item.price.toLocaleString()}</span>
+            ${item.file_url ? `<a href="${API}${item.file_url}" target="_blank" style="font-size:11px;color:var(--muted);text-decoration:none;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;">Preview File</a>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+          <button onclick="approveCatalogItem('${item.id}')" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:var(--green);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Approve</button>
+          <button onclick="rejectCatalogItem('${item.id}','${escHtml(item.name)}')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Reject</button>
+        </div>
+      </div>`).join('');
+  }
+
+  async function approveCatalogItem(itemId) {
+    const res = await apiFetch(`/api/catalog/${itemId}/approve`, { method: 'POST' });
+    if (res.ok) { showToast('Item approved!'); renderCatalogReview(); }
+    else showToast('Failed', 'error');
+  }
+
+  async function rejectCatalogItem(itemId, name) {
+    if (!confirm(`Reject and delete "${name}"?`)) return;
+    const res = await apiFetch(`/api/catalog/${itemId}`, { method: 'DELETE' });
+    if (res.ok) { showToast('Item rejected.'); renderCatalogReview(); }
+    else showToast('Failed', 'error');
   }
 
   // Close modals on overlay click
