@@ -42,10 +42,10 @@
 
     /* BANNER + AVATAR */
     .profile-banner {
-      height: 140px; border-radius: 16px 16px 0 0;
+      height: 160px; border-radius: 16px 16px 0 0;
       background: linear-gradient(135deg, #1e1040, #0d2040, #0d2a2a);
       border: 1px solid var(--border); border-bottom: none;
-      position: relative;
+      position: relative; overflow: hidden;
     }
     .profile-card {
       background: var(--surface); border: 1px solid var(--border);
@@ -53,11 +53,11 @@
       margin-bottom: 24px;
     }
     .profile-avatar-wrap {
-      margin-top: -44px; margin-bottom: 12px;
       display: flex; align-items: flex-end; justify-content: space-between;
+      padding-top: 0; margin-bottom: 14px; position: relative; top: -44px; margin-bottom: -30px;
     }
     .profile-avatar {
-      width: 88px; height: 88px; border-radius: 50%;
+      width: 92px; height: 92px; border-radius: 50%;
       background: linear-gradient(135deg, #7C3AED, #06B6D4);
       border: 4px solid var(--surface);
       display: flex; align-items: center; justify-content: center;
@@ -65,7 +65,7 @@
       overflow: hidden; flex-shrink: 0;
     }
     .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .profile-actions { display: flex; gap: 8px; padding-bottom: 4px; }
+    .profile-actions { display: flex; gap: 8px; padding-bottom: 4px; align-items: center; }
 
     .btn {
       border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 700;
@@ -284,7 +284,7 @@
       }
 
       document.getElementById('profileContent').innerHTML = `
-        <div class="profile-banner"></div>
+        <div class="profile-banner" style="${p.avatar_url ? '' : ''}"></div>
         <div class="profile-card">
           <div class="profile-avatar-wrap">
             <div class="profile-avatar">
@@ -292,14 +292,16 @@
             </div>
             <div class="profile-actions">${actionBtns}</div>
           </div>
-          ${online ? '<div class="online-pill"><div class="online-dot-sm"></div>Online now</div>' : ''}
-          <div class="profile-display-name">${p.display_name || p.username}</div>
-          <div class="profile-username">@${p.username} · Joined ${joined}</div>
-          ${p.bio ? `<div class="profile-bio">${escapeHtml(p.bio)}</div>` : ''}
-          <div class="profile-stats">
-            <div class="profile-stat">
-              <div class="profile-stat-num">${(p.bricks || 0).toLocaleString()}</div>
-              <div class="profile-stat-label">Bricks</div>
+          <div style="padding-top:8px;">
+            ${online ? '<div class="online-pill"><div class="online-dot-sm"></div>Online now</div>' : ''}
+            <div class="profile-display-name">${p.display_name || p.username}</div>
+            <div class="profile-username">@${p.username} · Joined ${joined}</div>
+            ${p.bio ? `<div class="profile-bio">${escapeHtml(p.bio)}</div>` : ''}
+            <div class="profile-stats">
+              <div class="profile-stat">
+                <div class="profile-stat-num">${(p.bricks || 0).toLocaleString()}</div>
+                <div class="profile-stat-label">Bricks</div>
+              </div>
             </div>
           </div>
         </div>
@@ -310,7 +312,7 @@
         </div>
 
         <div id="gamesTab">
-          <div class="empty-state"><p>No games published yet.</p></div>
+          <div class="empty-state"><p>Loading games...</p></div>
         </div>
         <div id="aboutTab" style="display:none;">
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;">
@@ -322,7 +324,36 @@
             </div>
           </div>
         </div>`;
+
+      // Load their games
+      loadProfileGames(p.username);
     }
+
+    async function loadProfileGames(username) {
+      const gamesTab = document.getElementById('gamesTab');
+      if (!gamesTab) return;
+      try {
+        const res = await fetch(`${API}/api/games?published=true`);
+        if (!res.ok) throw new Error();
+        const allGames = await res.json();
+        const games = allGames.filter(g => g.owner_username === username);
+        if (!games.length) {
+          gamesTab.innerHTML = '<div class="empty-state"><p>No games published yet.</p></div>';
+          return;
+        }
+        gamesTab.innerHTML = `<div class="games-grid">${games.map(g => `
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform 0.15s,border-color 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='rgba(124,58,237,0.5)'" onmouseout="this.style.transform='';this.style.borderColor=''">
+            <div style="aspect-ratio:16/9;background:linear-gradient(135deg,#1e1040,#0d2040);display:flex;align-items:center;justify-content:center;font-size:11px;color:rgba(255,255,255,0.2);font-weight:700;">
+              ${g.thumbnail ? `<img src="${API}${g.thumbnail}" style="width:100%;height:100%;object-fit:cover;" />` : 'No thumbnail'}
+            </div>
+            <div style="padding:10px 12px;">
+              <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(g.title)}</div>
+              <div style="font-size:11px;color:var(--muted);">${(g.play_count||0).toLocaleString()} plays</div>
+            </div>
+          </div>`).join('')}</div>`;
+      } catch {
+        gamesTab.innerHTML = '<div class="empty-state"><p>Could not load games.</p></div>';
+      }
 
     function renderNotFound() {
       document.getElementById('profileContent').innerHTML = `
